@@ -90,13 +90,13 @@ Note: ```-auth-version``` is the version of the deployed Openstack Identity Serv
 The `$noreply_email` and `$noreply_password` properties, configured in the [Dispatcher configuration file](/config/dispatcher.conf), are used by SAPS to notify users about job completion. In the current SAPS version, if one uses a gmail account, it is necessary to enable the following gmail configuration:
 
 Sign in to your Gmail account and go to **Manage your Google account**
-![Manage your Google account](docs/img/dispatcher-install-configure-noreply-email-img1.png)
+![Manage your Google account](resources/img/dispatcher-install-configure-noreply-email-img1.png)
 
 Then, navigate to **Security** settings
-![Security settings](docs/img/dispatcher-install-configure-noreply-email-img2.png)
+![Security settings](resources/img/dispatcher-install-configure-noreply-email-img2.png)
 
 Look for **Less secure app access** and enable it
-![Less secure app access](docs/img/dispatcher-install-configure-noreply-email-img3.png)
+![Less secure app access](resources/img/dispatcher-install-configure-noreply-email-img3.png)
 
 ## Test
 
