@@ -6,6 +6,7 @@ import saps.dispatcher.core.restlet.DatabaseApplication;
 import saps.common.core.model.SapsUser;
 
 import java.io.FileInputStream;
+import java.util.Objects;
 import java.util.Properties;
 
 public class SubmissionDispatcherMain {
@@ -18,6 +19,17 @@ public class SubmissionDispatcherMain {
     public static void main(String[] args) throws Exception {
 
         String confPath = args[0];
+        String executionTagsFilePath = args[1];
+
+        if (Objects.isNull(confPath) || confPath.isEmpty()) {
+            throw new IllegalArgumentException("The path to the configuration file cannot be null or empty");
+        }
+
+        if (Objects.isNull(executionTagsFilePath) || executionTagsFilePath.isEmpty()) {
+            throw new IllegalArgumentException("The path to the execution tags file cannot be null or empty");
+        }
+
+        System.setProperty(SubmissionDispatcher.EXECUTION_TAGS_FILE_PATH_KEY, executionTagsFilePath);
 
         final Properties properties = new Properties();
         FileInputStream input = new FileInputStream(confPath);
