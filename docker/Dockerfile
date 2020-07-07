@@ -32,7 +32,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /dispatcher
 
-COPY --from=builder /app/target/saps-engine-0.0.1-SNAPSHOT.jar dispatcher.jar
+COPY --from=builder /app/target/saps-dispatcher-0.0.1-SNAPSHOT.jar dispatcher.jar
 COPY --from=builder /app/target/lib lib/
 COPY ./resources resources/
 COPY ./scripts  scripts/
