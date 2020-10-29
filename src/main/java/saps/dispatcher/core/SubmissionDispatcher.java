@@ -18,6 +18,7 @@ import saps.catalog.core.retry.CatalogUtils;
 
 public class SubmissionDispatcher {
 
+    public static final String EXECUTION_TAGS_FILE_PATH_KEY = "EXECUTION_SCRIPT_TAGS_FILE_PATH";
     private final Catalog catalog;
 
     private static final Logger LOGGER = Logger.getLogger(SubmissionDispatcher.class);
@@ -148,11 +149,12 @@ public class SubmissionDispatcher {
         endCal.setTime(endDate);
         endCal.add(Calendar.DAY_OF_YEAR, 1);
 
+        String tagsFilePath = System.getProperty(EXECUTION_TAGS_FILE_PATH_KEY);
         ExecutionScriptTag imageDockerInputdownloading = ExecutionScriptTagUtil
-                .getExecutionScriptTag(inputdownloadingPhaseTag, ExecutionScriptTagUtil.INPUT_DOWNLOADER);
+                .getExecutionScriptTag(tagsFilePath, inputdownloadingPhaseTag, ExecutionScriptTagUtil.INPUT_DOWNLOADER);
         ExecutionScriptTag imageDockerPreprocessing = ExecutionScriptTagUtil
-                .getExecutionScriptTag(preprocessingPhaseTag, ExecutionScriptTagUtil.PRE_PROCESSING);
-        ExecutionScriptTag imageDockerProcessing = ExecutionScriptTagUtil.getExecutionScriptTag(processingPhaseTag,
+                .getExecutionScriptTag(tagsFilePath, preprocessingPhaseTag, ExecutionScriptTagUtil.PRE_PROCESSING);
+        ExecutionScriptTag imageDockerProcessing = ExecutionScriptTagUtil.getExecutionScriptTag(tagsFilePath, processingPhaseTag,
                 ExecutionScriptTagUtil.PROCESSING);
 
         String digestInputdownloading = DigestUtil.getDigest(imageDockerInputdownloading);
