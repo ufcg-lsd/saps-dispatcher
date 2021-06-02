@@ -33,9 +33,9 @@ public class DigestUtil {
       if (builder.exitValue() != 0)
         throw new Exception("Process output exit code: " + builder.exitValue());
 
-      BufferedReader reader = new BufferedReader(new InputStreamReader(builder.getInputStream()));
-
-      result = reader.readLine();
+      try (BufferedReader reader = new BufferedReader(new InputStreamReader(builder.getInputStream()))) {
+        result = reader.readLine();
+      }
     } catch (Exception e) {
       LOGGER.error(
           "Error while trying get digest from Docker image ["
