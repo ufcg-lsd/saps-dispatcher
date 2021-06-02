@@ -172,9 +172,8 @@ public class ImageResource extends BaseResource {
             + email;
     LOGGER.info(builder);
 
-    List<String> taskIds = new LinkedList<String>();
     try {
-      taskIds =
+      List<String> taskIds =
           application.addNewTasks(
               lowerLeftLatitude,
               lowerLeftLongitude,
@@ -187,11 +186,11 @@ public class ImageResource extends BaseResource {
               processingPhaseTag,
               priority,
               email);
+      return new StringRepresentation(gson.toJson(taskIds), MediaType.APPLICATION_JSON);
+
     } catch (Exception e) {
       LOGGER.error("Error while add news tasks.", e);
       return new StringRepresentation(ADD_IMAGES_MESSAGE_FAILURE, MediaType.TEXT_PLAIN);
     }
-
-    return new StringRepresentation(gson.toJson(taskIds), MediaType.APPLICATION_JSON);
   }
 }
