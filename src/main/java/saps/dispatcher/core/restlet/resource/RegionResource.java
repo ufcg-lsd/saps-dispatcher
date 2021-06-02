@@ -63,10 +63,10 @@ public class RegionResource extends BaseResource {
 
     JSONArray result = new JSONArray();
     try {
-      for (String region : regionsFrequency.keySet()) {
+      for (Map.Entry<String, Integer> entry : regionsFrequency.entrySet()) {
         JSONObject jsonObject = new JSONObject();
-        jsonObject.put("region", region);
-        jsonObject.put("count", regionsFrequency.get(region));
+        jsonObject.put("region", entry.getKey());
+        jsonObject.put("count", entry.getValue());
         result.put(jsonObject);
       }
     } catch (JSONException e) {

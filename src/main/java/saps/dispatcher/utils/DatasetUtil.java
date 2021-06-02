@@ -24,11 +24,11 @@ public class DatasetUtil {
 
     List<String> sats = new ArrayList<String>();
 
-    for (String sat : satYearBegin.keySet()) {
-      Integer yearBegin = satYearBegin.get(sat);
-      Integer yearEnd = satYearEnd.get(sat);
+    for (Map.Entry<String, Integer> entry : satYearBegin.entrySet()) {
+      Integer yearBegin = entry.getValue();
+      Integer yearEnd = satYearEnd.get(entry.getKey());
       if (year >= yearBegin && year <= yearEnd) {
-        sats.add(sat);
+        sats.add(entry.getKey());
       }
     }
 
