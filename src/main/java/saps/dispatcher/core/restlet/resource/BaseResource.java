@@ -38,6 +38,7 @@ public class BaseResource extends ServerResource {
     String md5Pass = DigestUtils.md5Hex(userPass);
 
     LOGGER.debug("Getting user [" + user + "] from Catalog");
+
     LOGGER.debug(
         "Comparing user password in Catalog ["
             + user.getUserPassword()
@@ -45,7 +46,7 @@ public class BaseResource extends ServerResource {
             + md5Pass
             + "]");
 
-    if (user != null && user.getUserPassword().equals(md5Pass) && user.isEnable()) {
+    if (user.getUserPassword().equals(md5Pass) && user.isEnable()) {
       if (mustBeAdmin && !user.getAdminRole()) {
         // the user must be an admin and the logged user is not
         LOGGER.error("Admin level account needed for this action.");

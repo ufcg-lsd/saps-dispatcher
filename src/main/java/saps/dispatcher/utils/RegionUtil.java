@@ -35,13 +35,13 @@ public class RegionUtil {
     if (builder.exitValue() != 0)
       throw new Exception("Process output exit code: " + builder.exitValue());
 
-    BufferedReader reader = new BufferedReader(new InputStreamReader(builder.getInputStream()));
     StringBuilder builderS = new StringBuilder();
-
-    String line;
-    while ((line = reader.readLine()) != null) {
-      builderS.append(line);
-      builderS.append(System.getProperty("line.separator"));
+    try (BufferedReader reader = new BufferedReader(new InputStreamReader(builder.getInputStream()))) {
+      String line;
+      while ((line = reader.readLine()) != null) {
+        builderS.append(line);
+        builderS.append(System.getProperty("line.separator"));
+      }
     }
 
     result = builderS.toString();
