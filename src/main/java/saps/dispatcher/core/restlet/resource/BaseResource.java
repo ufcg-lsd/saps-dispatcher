@@ -21,20 +21,34 @@ public class BaseResource extends ServerResource {
     application = (DatabaseApplication) getApplication();
   }
 
-  protected boolean authenticateUser(String userEmail, String userPass) {
-    return authenticateUser(userEmail, userPass, false);
+  protected boolean authenticateUser(String userEmail, String userPass, String userEGI) {
+    return authenticateUser(userEmail, userPass, false, userEGI);
   }
 
-  protected boolean authenticateUser(String userEmail, String userPass, boolean mustBeAdmin) {
+  protected boolean authenticateUser(String userEmail, String userPass, boolean mustBeAdmin, String userEGI) {
+    // TODO: Get the user by username 
+    // TODO: Authenticate if the userEGI exists in the username column
+
+
     LOGGER.debug(
         "Trying to authenticate the user [" + userEmail + "] with password [" + userPass + "]");
 
-    if (userEmail == null || userEmail.isEmpty() || userPass == null || userPass.isEmpty()) {
-      LOGGER.error("User email or user password was null.");
+    if (userEmail == null || userEmail.isEmpty()) {
+      LOGGER.error("User email was null.");
+      return false;
+    }
+ 
+    SapsUser user = application.getUser(userEmail);
+   
+    if (userEGI.equals(user.getUserName()) && user.isEnable()) {
+      return true;
+    } 
+
+    if (userPass == null || userPass.isEmpty()) {
+      LOGGER.error("User password was null.");
       return false;
     }
 
-    SapsUser user = application.getUser(userEmail);
     String md5Pass = DigestUtils.md5Hex(userPass);
 
     LOGGER.debug("Getting user [" + user + "] from Catalog");

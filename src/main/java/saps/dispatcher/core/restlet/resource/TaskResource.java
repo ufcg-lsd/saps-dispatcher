@@ -26,10 +26,11 @@ public class TaskResource extends BaseResource {
 
     String userEmail = form.getFirstValue(UserResource.REQUEST_ATTR_USER_EMAIL, true);
     String userPass = form.getFirstValue(UserResource.REQUEST_ATTR_USERPASS, true);
+    String userEGI = form.getFirstValue(UserResource.REQUEST_ATTR_USER_EGI, true);
 
     // FIXME I think that authenticateUser should throw an exception itself once
     // the authentication process hasn't worked... - by @raonismaneoto
-    if (!authenticateUser(userEmail, userPass))
+    if (!authenticateUser(userEmail, userPass, userEGI))
       throw new ResourceException(HttpStatus.SC_UNAUTHORIZED);
 
     String taskId = getAttribute("id");

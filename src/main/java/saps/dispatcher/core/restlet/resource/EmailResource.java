@@ -38,10 +38,11 @@ public class EmailResource extends BaseResource {
 
     String userEmail = form.getFirstValue(UserResource.REQUEST_ATTR_USER_EMAIL, true);
     String userPass = form.getFirstValue(UserResource.REQUEST_ATTR_USERPASS, true);
+    String userEGI = form.getFirstValue(UserResource.REQUEST_ATTR_USER_EGI, true);
 
     // FIXME I think that authenticateUser should throw an exception itself once
     // the authentication process hasn't worked... - by @raonismaneoto
-    if (!authenticateUser(userEmail, userPass) || userEmail.equals("anonymous"))
+    if (!authenticateUser(userEmail, userPass, userEGI) || userEmail.equals("anonymous"))
       throw new ResourceException(HttpStatus.SC_UNAUTHORIZED);
 
     String[] tasksId = form.getValuesArray(REQUEST_ATTR_PROCESSED_TASKS, true);

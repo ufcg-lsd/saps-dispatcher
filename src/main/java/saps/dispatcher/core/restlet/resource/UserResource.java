@@ -19,6 +19,7 @@ public class UserResource extends BaseResource {
   public static final String REQUEST_ATTR_USER_EMAIL = "userEmail";
   public static final String REQUEST_ATTR_USERNAME = "userName";
   public static final String REQUEST_ATTR_USERPASS = "userPass";
+  public static final String REQUEST_ATTR_USER_EGI = "userEGI";
   private static final String REQUEST_ATTR_USERPASS_CONFIRM = "userPassConfirm";
   private static final String REQUEST_ATTR_USERNOTIFY = "userNotify";
   private static final String CREATE_USER_MESSAGE_OK = "User created successfully";
@@ -64,8 +65,9 @@ public class UserResource extends BaseResource {
 
     String user = form.getFirstValue(REQUEST_ATTR_USER_EMAIL, true);
     String pass = form.getFirstValue(REQUEST_ATTR_USERPASS, true);
+    String userEGI = form.getFirstValue(REQUEST_ATTR_USER_EGI, true);
 
-    if (authenticateUser(user, pass)) {
+    if (authenticateUser(user, pass, userEGI)) {
       LOGGER.debug("User [" + user + "] successfully authenticated");
       return new StringRepresentation("Success");
     } else {

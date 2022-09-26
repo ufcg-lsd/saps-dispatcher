@@ -45,8 +45,9 @@ public class RegionResource extends BaseResource {
 
     String userEmail = series.getFirstValue(UserResource.REQUEST_ATTR_USER_EMAIL, true);
     String userPass = series.getFirstValue(UserResource.REQUEST_ATTR_USERPASS, true);
+    String userEGI = series.getFirstValue(UserResource.REQUEST_ATTR_USER_EGI, true);
 
-    if (!authenticateUser(userEmail, userPass)) {
+    if (!authenticateUser(userEmail, userPass, userEGI)) {
       throw new ResourceException(HttpStatus.SC_UNAUTHORIZED);
     }
 
@@ -82,7 +83,9 @@ public class RegionResource extends BaseResource {
 
     String userEmail = form.getFirstValue(UserResource.REQUEST_ATTR_USER_EMAIL, true);
     String userPass = form.getFirstValue(UserResource.REQUEST_ATTR_USERPASS, true);
-    if (!authenticateUser(userEmail, userPass) || userEmail.equals("anonymous")) {
+    String userEGI = form.getFirstValue(UserResource.REQUEST_ATTR_USER_EGI, true);
+
+    if (!authenticateUser(userEmail, userPass, userEGI) || userEmail.equals("anonymous")) {
       throw new ResourceException(HttpStatus.SC_UNAUTHORIZED);
     }
     String lowerLeftLatitude;
