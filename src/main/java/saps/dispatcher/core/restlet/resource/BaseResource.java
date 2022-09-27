@@ -29,13 +29,12 @@ public class BaseResource extends ServerResource {
 
   
   protected boolean authenticateUser(String userEmail, String userPass, boolean mustBeAdmin, String userEGI) {
-    //WIP
     // TODO: Authenticate if the userEGI exists in the username column
 
     LOGGER.debug(
         "Trying to authenticate the user [" + userEmail + "] with password [" + userPass + "]");
     
-    String userID = userEGI != "" ? userEGI : userEmail;
+    String userID = (userEGI == null || userEGI.isEmpty()) ? userEmail: userEGI;
 
     SapsUser user;
 
@@ -46,14 +45,9 @@ public class BaseResource extends ServerResource {
       return false;
     }
  
-    if (user.getUserEmail() == userEGI && user.isEnable()) {
+    if (userEGI.equals(user.getUserEmail()) && user.isEnable()) {
       return true;
     } 
-    
-    /* else if (userID == null || userID.isEmpty()) {
-      LOGGER.error("User email/password was null."); 
-      return false;
-    } */
 
     if (userPass == null || userPass.isEmpty()) {
       LOGGER.error("User password was null.");
