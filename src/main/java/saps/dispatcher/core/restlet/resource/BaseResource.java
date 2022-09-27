@@ -8,6 +8,8 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.log4j.Logger;
 import org.restlet.data.Form;
 import org.restlet.resource.ServerResource;
+
+import freemarker.core.ReturnInstruction.Return;
 import saps.common.core.model.SapsUser;
 import saps.dispatcher.core.restlet.DatabaseApplication;
 
@@ -21,20 +23,37 @@ public class BaseResource extends ServerResource {
     application = (DatabaseApplication) getApplication();
   }
 
-  protected boolean authenticateUser(String userEmail, String userPass) {
-    return authenticateUser(userEmail, userPass, false);
+  protected boolean authenticateUser(String userEmail, String userPass, String userEGI) {
+    return authenticateUser(userEmail, userPass, false, userEGI);
   }
 
-  protected boolean authenticateUser(String userEmail, String userPass, boolean mustBeAdmin) {
+  
+  protected boolean authenticateUser(String userEmail, String userPass, boolean mustBeAdmin, String userEGI) {
+    // TODO: Authenticate if the userEGI exists in the username column
+
     LOGGER.debug(
         "Trying to authenticate the user [" + userEmail + "] with password [" + userPass + "]");
+    
+    String userID = (userEGI == null || userEGI.isEmpty()) ? userEmail: userEGI;
 
-    if (userEmail == null || userEmail.isEmpty() || userPass == null || userPass.isEmpty()) {
-      LOGGER.error("User email or user password was null.");
+    SapsUser user;
+
+    try {
+      user = application.getUser(userID);
+    } catch (Error err) {
+      LOGGER.error("User not found."); 
+      return false;
+    }
+ 
+    if (userEGI.equals(user.getUserEmail()) && user.isEnable()) {
+      return true;
+    } 
+
+    if (userPass == null || userPass.isEmpty()) {
+      LOGGER.error("User password was null.");
       return false;
     }
 
-    SapsUser user = application.getUser(userEmail);
     String md5Pass = DigestUtils.md5Hex(userPass);
 
     LOGGER.debug("Getting user [" + user + "] from Catalog");
