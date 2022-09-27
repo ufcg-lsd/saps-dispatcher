@@ -8,6 +8,8 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.log4j.Logger;
 import org.restlet.data.Form;
 import org.restlet.resource.ServerResource;
+
+import freemarker.core.ReturnInstruction.Return;
 import saps.common.core.model.SapsUser;
 import saps.dispatcher.core.restlet.DatabaseApplication;
 
@@ -25,24 +27,33 @@ public class BaseResource extends ServerResource {
     return authenticateUser(userEmail, userPass, false, userEGI);
   }
 
+  
   protected boolean authenticateUser(String userEmail, String userPass, boolean mustBeAdmin, String userEGI) {
-    // TODO: Get the user by username 
+    //WIP
     // TODO: Authenticate if the userEGI exists in the username column
-
 
     LOGGER.debug(
         "Trying to authenticate the user [" + userEmail + "] with password [" + userPass + "]");
+    
+    String userID = userEGI != "" ? userEGI : userEmail;
 
-    if (userEmail == null || userEmail.isEmpty()) {
-      LOGGER.error("User email was null.");
+    SapsUser user;
+
+    try {
+      user = application.getUser(userID);
+    } catch (Error err) {
+      LOGGER.error("User not found."); 
       return false;
     }
  
-    SapsUser user = application.getUser(userEmail);
-   
-    if (userEGI.equals(user.getUserName()) && user.isEnable()) {
+    if (user.getUserEmail() == userEGI && user.isEnable()) {
       return true;
     } 
+    
+    /* else if (userID == null || userID.isEmpty()) {
+      LOGGER.error("User email/password was null."); 
+      return false;
+    } */
 
     if (userPass == null || userPass.isEmpty()) {
       LOGGER.error("User password was null.");
