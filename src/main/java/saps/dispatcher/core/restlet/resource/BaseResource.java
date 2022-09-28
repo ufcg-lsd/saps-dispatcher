@@ -32,7 +32,7 @@ public class BaseResource extends ServerResource {
     // TODO: Authenticate if the userEGI exists in the username column
 
     LOGGER.debug(
-        "Trying to authenticate the user [" + userEmail + "] with password [" + userPass + "]");
+        "Trying to authenticate the user [" + userEmail + "] with password [" + userPass + "] and EGI [" + userEGI + "]");
     
     String userID = (userEGI == null || userEGI.isEmpty()) ? userEmail: userEGI;
 
@@ -45,7 +45,7 @@ public class BaseResource extends ServerResource {
       return false;
     }
  
-    if (userEGI.equals(user.getUserEmail()) && user.isEnable()) {
+    if (user.getUserEmail().equals(userEGI) && user.isEnable()) {
       return true;
     } 
 
