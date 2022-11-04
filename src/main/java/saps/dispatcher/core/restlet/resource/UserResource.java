@@ -1,6 +1,7 @@
 /* (C)2020 */
 package saps.dispatcher.core.restlet.resource;
 
+import java.util.Properties;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.http.HttpStatus;
 import org.apache.log4j.Logger;
@@ -11,6 +12,7 @@ import org.restlet.representation.Representation;
 import org.restlet.representation.StringRepresentation;
 import org.restlet.resource.Post;
 import org.restlet.resource.ResourceException;
+import saps.common.core.model.SapsUser;
 
 public class UserResource extends BaseResource {
 
@@ -24,6 +26,7 @@ public class UserResource extends BaseResource {
   private static final String REQUEST_ATTR_USERNOTIFY = "userNotify";
   private static final String CREATE_USER_MESSAGE_OK = "User created successfully";
   private static final String CREATE_USER_ALREADY_EXISTS = "User already exists";
+  private static final String EGI_SECRET_KEY = "user_egi_secret_key";
 
   public UserResource() {
     super();
@@ -39,19 +42,29 @@ public class UserResource extends BaseResource {
     String userPass = form.getFirstValue(REQUEST_ATTR_USERPASS);
     String userPassConfirm = form.getFirstValue(REQUEST_ATTR_USERPASS_CONFIRM);
     String userNotify = form.getFirstValue(REQUEST_ATTR_USERNOTIFY);
-
+    
     checkMandatoryAttributes(userName, userEmail, userPass, userPassConfirm);
+    
+    Properties properties = application.getProperties();
+    String EGISecretKey = properties.getProperty(EGI_SECRET_KEY);    
+    SapsUser user = application.getUser(userEmail);
 
-    LOGGER.debug("Creating user with userEmail " + userEmail + " and userName " + userName);
+    if (user != null && userPass.equals(EGISecretKey)) {
+      LOGGER.debug("User [" + userEmail + "] successfully authenticated");
+      return new StringRepresentation("Success");
+    } else {
+      LOGGER.debug("Creating user with userEmail " + userEmail + " and userName " + userName);
+    }
 
     try {
       String md5Pass = DigestUtils.md5Hex(userPass);
+      boolean userState = userPass.equals(EGISecretKey); //If is an EGI user, automatically his status is enabled
       boolean notify = false;
       if (userNotify.equals("yes")) {
         notify = true;
       }
-      application.createUser(userEmail, userName, md5Pass, false, notify, false);
-    } catch (Exception e) {
+      application.createUser(userEmail, userName, md5Pass, userState, notify, false);
+    } catch (Exception e) {        
       LOGGER.error("Error while creating user", e);
       return new StringRepresentation(CREATE_USER_ALREADY_EXISTS, MediaType.TEXT_PLAIN);
     }
