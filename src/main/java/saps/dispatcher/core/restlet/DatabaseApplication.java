@@ -243,4 +243,21 @@ public class DatabaseApplication extends Application {
         preprocessingPhaseTag,
         processingPhaseTag);
   }
+
+  public List<SapsImage> getTasksOnGoingWithPagination(Integer page, Integer size) {
+    return submissionDispatcher.getTasksOnGoingWithPagination(page, size);
+  }
+
+  public Integer getTasksCountOnGoing() {
+    return submissionDispatcher.getTasksCountOnGoing();
+  }
+
+  public List<SapsImage> getTasksCompletedWithPagination(Integer page, Integer size) {
+    return submissionDispatcher.getTasksCompletedWithPagination(page, size);
+  }
+
+  public Integer getTasksCountCompleted() {
+    return submissionDispatcher.getTasksCountCompleted();
+  }
+
 }

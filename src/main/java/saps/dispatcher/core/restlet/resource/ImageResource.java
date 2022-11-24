@@ -1,14 +1,15 @@
 /* (C)2020 */
 package saps.dispatcher.core.restlet.resource;
 
-import com.google.gson.Gson;
+import java.util.ArrayList;
 import java.util.Date;
-import java.util.LinkedList;
 import java.util.List;
+
 import org.apache.commons.httpclient.HttpStatus;
 import org.apache.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 import org.restlet.data.Form;
 import org.restlet.data.Header;
 import org.restlet.data.MediaType;
@@ -19,6 +20,9 @@ import org.restlet.resource.Get;
 import org.restlet.resource.Post;
 import org.restlet.resource.ResourceException;
 import org.restlet.util.Series;
+
+import com.google.gson.Gson;
+
 import saps.common.core.model.SapsImage;
 import saps.dispatcher.core.restlet.DatabaseApplication;
 
@@ -26,6 +30,9 @@ public class ImageResource extends BaseResource {
 
   private static final Logger LOGGER = Logger.getLogger(ImageResource.class);
 
+  private static final String QUERY_TASK_STATE = "taskState";
+  private static final String QUERY_PAGINATION_PAGE = "page";
+  private static final String QUERY_PAGINATION_SIZE = "size";
   private static final String LOWER_LEFT = "lowerLeft";
   private static final String UPPER_RIGHT = "upperRight";
   private static final String PROCESSING_INIT_DATE = "initialDate";
@@ -48,34 +55,51 @@ public class ImageResource extends BaseResource {
   @SuppressWarnings("unchecked")
   @Get
   public Representation getTasks() throws Exception {
-    Series<Header> series = (Series<Header>) getRequestAttributes().get("org.restlet.http.headers");
+    JSONArray tasksJSON = new JSONArray();
+    JSONObject responseJSON = new JSONObject();  
 
+    Series<Header> series = (Series<Header>) getRequestAttributes().get("org.restlet.http.headers");
     String userEmail = series.getFirstValue(UserResource.REQUEST_ATTR_USER_EMAIL, true);
     String userPass = series.getFirstValue(UserResource.REQUEST_ATTR_USERPASS, true);
     String userEGI = series.getFirstValue(UserResource.REQUEST_ATTR_USER_EGI, true);
+    String state = series.getFirstValue(QUERY_TASK_STATE, true);
+    Integer page = Integer.parseInt(series.getFirstValue(QUERY_PAGINATION_PAGE, true));
+    Integer size = Integer.parseInt(series.getFirstValue(QUERY_PAGINATION_SIZE, true));
 
     if (!authenticateUser(userEmail, userPass, userEGI)) {
       throw new ResourceException(HttpStatus.SC_UNAUTHORIZED);
     } 
-
+    
+    //This 'if' should be a unique method, something like 'getTaskById'
     String taskId = (String) getRequest().getAttributes().get("taskId");
-
-    JSONArray tasksJSON;
     if (taskId != null) {
-      LOGGER.info("Getting task");
-      LOGGER.debug("TaskID is " + taskId);
+      LOGGER.info("Getting taskID" + taskId);
       SapsImage imageTask = ((DatabaseApplication) getApplication()).getTask(taskId);
-      tasksJSON = new JSONArray();
       try {
         tasksJSON.put(imageTask.toJSON());
+        responseJSON.put("tasks", tasksJSON);
       } catch (JSONException e) {
         LOGGER.error("Error while creating JSON from image task " + imageTask, e);
       }
     } else {
       LOGGER.info("Getting all tasks");
 
-      List<SapsImage> listOfTasks = ((DatabaseApplication) getApplication()).getTasks();
-      tasksJSON = new JSONArray();
+      Integer tasksCount;
+      List<SapsImage> listOfTasks = new ArrayList<SapsImage>();
+      switch (state) {
+        case "ongoing":
+          tasksCount = ((DatabaseApplication) getApplication()).getTasksCountOnGoing();
+          listOfTasks = ((DatabaseApplication) getApplication()).getTasksOnGoingWithPagination(page, size);
+          break;
+        case "completed":
+          tasksCount = ((DatabaseApplication) getApplication()).getTasksCountCompleted();
+          listOfTasks = ((DatabaseApplication) getApplication()).getTasksCompletedWithPagination(page, size);
+          break;
+        default:
+          tasksCount = listOfTasks.size();
+          listOfTasks = ((DatabaseApplication) getApplication()).getTasks();
+          break;
+      }
 
       for (SapsImage imageTask : listOfTasks) {
         try {
@@ -84,9 +108,12 @@ public class ImageResource extends BaseResource {
           LOGGER.error("Error while creating JSON from image task " + imageTask, e);
         }
       }
+
+      responseJSON.put("tasks", tasksJSON); //Tasks with pagination
+      responseJSON.put("allTasksCount", tasksCount); //Number of tasks without pagination
     }
 
-    return new StringRepresentation(tasksJSON.toString(), MediaType.APPLICATION_JSON);
+    return new StringRepresentation(responseJSON.toString(), MediaType.APPLICATION_JSON);
   }
 
   @Post

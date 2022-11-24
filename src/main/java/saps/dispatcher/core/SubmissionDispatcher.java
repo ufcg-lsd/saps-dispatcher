@@ -329,4 +329,21 @@ public class SubmissionDispatcher {
     }
     return filteredTasks;
   }
+
+  public List<SapsImage> getTasksOnGoingWithPagination(Integer page, Integer size) {
+    return CatalogUtils.getTasksOnGoingWithPagination(catalog, page, size, "get paginated ongoing tasks");
+  }
+
+  public Integer getTasksCountOnGoing() {
+    return CatalogUtils.getTasksCountOnGoing(catalog, "get ongoing amount of tasks");
+  }
+
+  public List<SapsImage> getTasksCompletedWithPagination(Integer page, Integer size) {
+    return CatalogUtils.getTasksCompletedWithPagination(catalog, page, size, "get paginated completed tasks");
+  }
+
+  public Integer getTasksCountCompleted() {
+    return CatalogUtils.getTasksCountCompleted(catalog, "get completed amount of tasks");
+  }
+
 }
