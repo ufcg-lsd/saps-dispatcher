@@ -30,9 +30,13 @@ public class ImageResource extends BaseResource {
 
   private static final Logger LOGGER = Logger.getLogger(ImageResource.class);
 
-  private static final String QUERY_TASK_STATE = "taskState";
-  private static final String QUERY_PAGINATION_PAGE = "page";
-  private static final String QUERY_PAGINATION_SIZE = "size";
+  private static final String QUERY_KEY_TASK_STATE = "taskState";
+  private static final String QUERY_KEY_PAGINATION_PAGE = "page";
+  private static final String QUERY_KEY_PAGINATION_SIZE = "size";
+  private static final String QUERY_KEY_PAGINATION_SORT = "sort";
+  private static final String QUERY_VALUE_ONGOING_TASKS = "ongoing";
+  private static final String QUERY_VALUE_COMPLETED_TASKS = "completed";
+
   private static final String LOWER_LEFT = "lowerLeft";
   private static final String UPPER_RIGHT = "upperRight";
   private static final String PROCESSING_INIT_DATE = "initialDate";
@@ -62,14 +66,22 @@ public class ImageResource extends BaseResource {
     String userEmail = series.getFirstValue(UserResource.REQUEST_ATTR_USER_EMAIL, true);
     String userPass = series.getFirstValue(UserResource.REQUEST_ATTR_USERPASS, true);
     String userEGI = series.getFirstValue(UserResource.REQUEST_ATTR_USER_EGI, true);
-    String state = series.getFirstValue(QUERY_TASK_STATE, true);
-    Integer page = Integer.parseInt(series.getFirstValue(QUERY_PAGINATION_PAGE, true));
-    Integer size = Integer.parseInt(series.getFirstValue(QUERY_PAGINATION_SIZE, true));
+    String state = series.getFirstValue(QUERY_KEY_TASK_STATE, true);
+    Integer page = Integer.parseInt(series.getFirstValue(QUERY_KEY_PAGINATION_PAGE, true));
+    Integer size = Integer.parseInt(series.getFirstValue(QUERY_KEY_PAGINATION_SIZE, true));
+    JSONObject sortJSON = new JSONObject(series.getFirstValue(QUERY_KEY_PAGINATION_SORT, true));    
 
     if (!authenticateUser(userEmail, userPass, userEGI)) {
       throw new ResourceException(HttpStatus.SC_UNAUTHORIZED);
     } 
-    
+
+    String sortField = "";
+    String sortOrder = "";
+    if (sortJSON.length() > 0) {
+      sortField = sortJSON.keys().next().toString();
+      sortOrder = sortJSON.get(sortField).toString();
+    } 
+        
     //This 'if' should be a unique method, something like 'getTaskById'
     String taskId = (String) getRequest().getAttributes().get("taskId");
     if (taskId != null) {
@@ -87,13 +99,13 @@ public class ImageResource extends BaseResource {
       Integer tasksCount;
       List<SapsImage> listOfTasks = new ArrayList<SapsImage>();
       switch (state) {
-        case "ongoing":
+        case QUERY_VALUE_ONGOING_TASKS:
           tasksCount = ((DatabaseApplication) getApplication()).getTasksCountOnGoing();
-          listOfTasks = ((DatabaseApplication) getApplication()).getTasksOnGoingWithPagination(page, size);
+          listOfTasks = ((DatabaseApplication) getApplication()).getTasksOnGoingWithPagination(page, size, sortField, sortOrder);
           break;
-        case "completed":
+        case QUERY_VALUE_COMPLETED_TASKS:
           tasksCount = ((DatabaseApplication) getApplication()).getTasksCountCompleted();
-          listOfTasks = ((DatabaseApplication) getApplication()).getTasksCompletedWithPagination(page, size);
+          listOfTasks = ((DatabaseApplication) getApplication()).getTasksCompletedWithPagination(page, size, sortField, sortOrder);
           break;
         default:
           tasksCount = listOfTasks.size();

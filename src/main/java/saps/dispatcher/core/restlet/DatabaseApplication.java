@@ -244,16 +244,16 @@ public class DatabaseApplication extends Application {
         processingPhaseTag);
   }
 
-  public List<SapsImage> getTasksOnGoingWithPagination(Integer page, Integer size) {
-    return submissionDispatcher.getTasksOnGoingWithPagination(page, size);
+  public List<SapsImage> getTasksOnGoingWithPagination(Integer page, Integer size, String sortField, String sortOrder) {
+    return submissionDispatcher.getTasksOnGoingWithPagination(page, size, sortField, sortOrder);
   }
 
   public Integer getTasksCountOnGoing() {
     return submissionDispatcher.getTasksCountOnGoing();
   }
 
-  public List<SapsImage> getTasksCompletedWithPagination(Integer page, Integer size) {
-    return submissionDispatcher.getTasksCompletedWithPagination(page, size);
+  public List<SapsImage> getTasksCompletedWithPagination(Integer page, Integer size, String sortField, String sortOrder) {
+    return submissionDispatcher.getTasksCompletedWithPagination(page, size, sortField, sortOrder);
   }
 
   public Integer getTasksCountCompleted() {
