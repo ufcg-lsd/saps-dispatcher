@@ -30,10 +30,12 @@ public class ImageResource extends BaseResource {
 
   private static final Logger LOGGER = Logger.getLogger(ImageResource.class);
 
+  private static final String QUERY_KEY_TASK_ID = "taskId";
   private static final String QUERY_KEY_TASK_STATE = "taskState";
   private static final String QUERY_KEY_PAGINATION_PAGE = "page";
   private static final String QUERY_KEY_PAGINATION_SIZE = "size";
   private static final String QUERY_KEY_PAGINATION_SORT = "sort";
+  private static final String QUERY_KEY_PAGINATION_SEARCH = "search";
   private static final String QUERY_VALUE_ONGOING_TASKS = "ongoing";
   private static final String QUERY_VALUE_COMPLETED_TASKS = "completed";
 
@@ -56,56 +58,49 @@ public class ImageResource extends BaseResource {
     super();
   }
 
-  @SuppressWarnings("unchecked")
-  @Get
-  public Representation getTasks() throws Exception {
+  private JSONObject getTaskById(String taskId) {
+    LOGGER.info("Getting taskID" + taskId);
+
+    SapsImage imageTask = ((DatabaseApplication) getApplication()).getTask(taskId);
+
     JSONArray tasksJSON = new JSONArray();
-    JSONObject responseJSON = new JSONObject();  
+    JSONObject responseJSON = new JSONObject();
+    try {
+      tasksJSON.put(imageTask.toJSON());
+      responseJSON.put("tasks", tasksJSON);
+    } catch (JSONException e) {
+      LOGGER.error("Error while creating JSON from image task " + imageTask, e);
+    }
 
-    Series<Header> series = (Series<Header>) getRequestAttributes().get("org.restlet.http.headers");
-    String userEmail = series.getFirstValue(UserResource.REQUEST_ATTR_USER_EMAIL, true);
-    String userPass = series.getFirstValue(UserResource.REQUEST_ATTR_USERPASS, true);
-    String userEGI = series.getFirstValue(UserResource.REQUEST_ATTR_USER_EGI, true);
-    String state = series.getFirstValue(QUERY_KEY_TASK_STATE, true);
-    Integer page = Integer.parseInt(series.getFirstValue(QUERY_KEY_PAGINATION_PAGE, true));
-    Integer size = Integer.parseInt(series.getFirstValue(QUERY_KEY_PAGINATION_SIZE, true));
-    JSONObject sortJSON = new JSONObject(series.getFirstValue(QUERY_KEY_PAGINATION_SORT, true));    
+    return responseJSON;
+  }
 
-    if (!authenticateUser(userEmail, userPass, userEGI)) {
-      throw new ResourceException(HttpStatus.SC_UNAUTHORIZED);
-    } 
+  private JSONObject getTasks(String state, Integer page, Integer size, JSONObject sortJSON) {
+    LOGGER.info("Getting all tasks");
 
     String sortField = "";
     String sortOrder = "";
-    if (sortJSON.length() > 0) {
-      sortField = sortJSON.keys().next().toString();
-      sortOrder = sortJSON.get(sortField).toString();
-    } 
-        
-    //This 'if' should be a unique method, something like 'getTaskById'
-    String taskId = (String) getRequest().getAttributes().get("taskId");
-    if (taskId != null) {
-      LOGGER.info("Getting taskID" + taskId);
-      SapsImage imageTask = ((DatabaseApplication) getApplication()).getTask(taskId);
-      try {
-        tasksJSON.put(imageTask.toJSON());
-        responseJSON.put("tasks", tasksJSON);
-      } catch (JSONException e) {
-        LOGGER.error("Error while creating JSON from image task " + imageTask, e);
+    JSONArray tasksJSON = new JSONArray();
+    JSONObject responseJSON = new JSONObject();
+
+    try {
+      if (sortJSON.length() > 0) {
+        sortField = sortJSON.keys().next().toString();
+        sortOrder = sortJSON.get(sortField).toString();
       }
-    } else {
-      LOGGER.info("Getting all tasks");
 
       Integer tasksCount;
       List<SapsImage> listOfTasks = new ArrayList<SapsImage>();
       switch (state) {
         case QUERY_VALUE_ONGOING_TASKS:
           tasksCount = ((DatabaseApplication) getApplication()).getTasksCountOnGoing();
-          listOfTasks = ((DatabaseApplication) getApplication()).getTasksOnGoingWithPagination(page, size, sortField, sortOrder);
+          listOfTasks = ((DatabaseApplication) getApplication()).getTasksOnGoingWithPagination(page, size, sortField,
+              sortOrder);
           break;
         case QUERY_VALUE_COMPLETED_TASKS:
           tasksCount = ((DatabaseApplication) getApplication()).getTasksCountCompleted();
-          listOfTasks = ((DatabaseApplication) getApplication()).getTasksCompletedWithPagination(page, size, sortField, sortOrder);
+          listOfTasks = ((DatabaseApplication) getApplication()).getTasksCompletedWithPagination(page, size, sortField,
+              sortOrder);
           break;
         default:
           tasksCount = listOfTasks.size();
@@ -114,15 +109,47 @@ public class ImageResource extends BaseResource {
       }
 
       for (SapsImage imageTask : listOfTasks) {
-        try {
-          tasksJSON.put(imageTask.toJSON());
-        } catch (JSONException e) {
-          LOGGER.error("Error while creating JSON from image task " + imageTask, e);
-        }
+        tasksJSON.put(imageTask.toJSON());
       }
 
-      responseJSON.put("tasks", tasksJSON); //Tasks with pagination
-      responseJSON.put("allTasksCount", tasksCount); //Number of tasks without pagination
+      responseJSON.put("tasks", tasksJSON); // Tasks with pagination
+      responseJSON.put("allTasksCount", tasksCount); // Number of tasks without pagination
+    } catch (JSONException e) {
+      LOGGER.error("Error while creating JSON from image task ", e);
+    }
+
+    return responseJSON;
+  }
+
+  @SuppressWarnings("unchecked")
+  @Get
+  public Representation getTasks() throws Exception {
+    JSONObject responseJSON = new JSONObject();
+
+    Series<Header> series = (Series<Header>) getRequestAttributes().get("org.restlet.http.headers");
+    String userEmail = series.getFirstValue(UserResource.REQUEST_ATTR_USER_EMAIL, true);
+    String userPass = series.getFirstValue(UserResource.REQUEST_ATTR_USERPASS, true);
+    String userEGI = series.getFirstValue(UserResource.REQUEST_ATTR_USER_EGI, true);
+    String taskId = series.getFirstValue(QUERY_KEY_TASK_ID, true);
+    String state = series.getFirstValue(QUERY_KEY_TASK_STATE, true);
+    Integer page = Integer.parseInt(series.getFirstValue(QUERY_KEY_PAGINATION_PAGE, true));
+    Integer size = Integer.parseInt(series.getFirstValue(QUERY_KEY_PAGINATION_SIZE, true));
+    JSONObject sortJSON = new JSONObject(series.getFirstValue(QUERY_KEY_PAGINATION_SORT, true));
+    // JSONObject searchJSON = new JSONObject(series.getFirstValue(QUERY_KEY_PAGINATION_SEARCH, true));
+
+    if (!authenticateUser(userEmail, userPass, userEGI)) {
+      throw new ResourceException(HttpStatus.SC_UNAUTHORIZED);
+    }
+
+    if (taskId != null) {
+      responseJSON = this.getTaskById(taskId);
+    }
+    // else if (searchJSON.length() > 0) {
+    // responseJSON = this.searchTask(state, page, size, sortJSON, tasksJSON,
+    // responseJSON);
+    // }
+    else {
+      responseJSON = this.getTasks(state, page, size, sortJSON);
     }
 
     return new StringRepresentation(responseJSON.toString(), MediaType.APPLICATION_JSON);
@@ -181,53 +208,51 @@ public class ImageResource extends BaseResource {
     String priority = form.getFirstValue(PRIORITY);
     String email = form.getFirstValue(EMAIL);
 
-    String builder =
-        "Creating new image process with configuration:\n"
-            + "\tLower Left: "
-            + lowerLeftLatitude
-            + ", "
-            + lowerLeftLongitude
-            + "\n"
-            + "\tUpper Right: "
-            + upperRightLatitude
-            + ", "
-            + upperRightLongitude
-            + "\n"
-            + "\tInterval: "
-            + initDate
-            + " - "
-            + endDate
-            + "\n"
-            + "\tInputdownloading tag: "
-            + inputdownloadingPhaseTag
-            + "\n"
-            + "\tPreprocessing tag: "
-            + preprocessingPhaseTag
-            + "\n"
-            + "\tProcessing tag: "
-            + processingPhaseTag
-            + "\n"
-            + "\tPriority: "
-            + priority
-            + "\n"
-            + "\tEmail: "
-            + email;
+    String builder = "Creating new image process with configuration:\n"
+        + "\tLower Left: "
+        + lowerLeftLatitude
+        + ", "
+        + lowerLeftLongitude
+        + "\n"
+        + "\tUpper Right: "
+        + upperRightLatitude
+        + ", "
+        + upperRightLongitude
+        + "\n"
+        + "\tInterval: "
+        + initDate
+        + " - "
+        + endDate
+        + "\n"
+        + "\tInputdownloading tag: "
+        + inputdownloadingPhaseTag
+        + "\n"
+        + "\tPreprocessing tag: "
+        + preprocessingPhaseTag
+        + "\n"
+        + "\tProcessing tag: "
+        + processingPhaseTag
+        + "\n"
+        + "\tPriority: "
+        + priority
+        + "\n"
+        + "\tEmail: "
+        + email;
     LOGGER.info(builder);
 
     try {
-      List<String> taskIds =
-          application.addNewTasks(
-              lowerLeftLatitude,
-              lowerLeftLongitude,
-              upperRightLatitude,
-              upperRightLongitude,
-              initDate,
-              endDate,
-              inputdownloadingPhaseTag,
-              preprocessingPhaseTag,
-              processingPhaseTag,
-              priority,
-              email);
+      List<String> taskIds = application.addNewTasks(
+          lowerLeftLatitude,
+          lowerLeftLongitude,
+          upperRightLatitude,
+          upperRightLongitude,
+          initDate,
+          endDate,
+          inputdownloadingPhaseTag,
+          preprocessingPhaseTag,
+          processingPhaseTag,
+          priority,
+          email);
       return new StringRepresentation(gson.toJson(taskIds), MediaType.APPLICATION_JSON);
 
     } catch (Exception e) {

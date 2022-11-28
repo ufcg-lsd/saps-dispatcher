@@ -23,6 +23,10 @@ public class SubmissionDispatcher {
 
   private static final Logger LOGGER = Logger.getLogger(SubmissionDispatcher.class);
 
+  private void addTimestampTaskInCatalog(SapsImage task, String message) {
+    CatalogUtils.addTimestampTask(catalog, task);
+  }
+
   public SubmissionDispatcher(Catalog catalog) {
     this.catalog = catalog;
   }
@@ -126,10 +130,6 @@ public class SubmissionDispatcher {
         processingPhaseTag,
         digestProcessing,
         "add new task [" + taskId + "]");
-  }
-
-  private void addTimestampTaskInCatalog(SapsImage task, String message) {
-    CatalogUtils.addTimestampTask(catalog, task);
   }
 
   /**
@@ -247,12 +247,28 @@ public class SubmissionDispatcher {
     return CatalogUtils.getAllTasks(catalog, "get all tasks");
   }
 
-  public SapsImage getTaskById(String taskId) {
+  public SapsImage getTask(String taskId) {
     return CatalogUtils.getTaskById(catalog, taskId, "gets task with id [" + taskId + "]");
   }
 
   public List<SapsImage> getTasksByState(ImageTaskState state) throws SQLException {
     return CatalogUtils.getTasks(catalog, state);
+  }
+
+  public List<SapsImage> getTasksOnGoingWithPagination(Integer page, Integer size, String sortField, String sortOrder) {
+    return CatalogUtils.getTasksOnGoingWithPagination(catalog, page, size, sortField, sortOrder, "get paginated ongoing tasks");
+  }
+
+  public List<SapsImage> getTasksCompletedWithPagination(Integer page, Integer size, String sortField, String sortOrder) {
+    return CatalogUtils.getTasksCompletedWithPagination(catalog, page, size, sortField, sortOrder, "get paginated completed tasks");
+  }
+
+  public Integer getTasksCountOnGoing() {
+    return CatalogUtils.getTasksCountOnGoing(catalog, "get ongoing amount of tasks");
+  }
+
+  public Integer getTasksCountCompleted() {
+    return CatalogUtils.getTasksCountCompleted(catalog, "get completed amount of tasks");
   }
 
   /**
@@ -329,21 +345,4 @@ public class SubmissionDispatcher {
     }
     return filteredTasks;
   }
-
-  public List<SapsImage> getTasksOnGoingWithPagination(Integer page, Integer size, String sortField, String sortOrder) {
-    return CatalogUtils.getTasksOnGoingWithPagination(catalog, page, size, sortField, sortOrder, "get paginated ongoing tasks");
-  }
-
-  public Integer getTasksCountOnGoing() {
-    return CatalogUtils.getTasksCountOnGoing(catalog, "get ongoing amount of tasks");
-  }
-
-  public List<SapsImage> getTasksCompletedWithPagination(Integer page, Integer size, String sortField, String sortOrder) {
-    return CatalogUtils.getTasksCompletedWithPagination(catalog, page, size, sortField, sortOrder, "get paginated completed tasks");
-  }
-
-  public Integer getTasksCountCompleted() {
-    return CatalogUtils.getTasksCountCompleted(catalog, "get completed amount of tasks");
-  }
-
 }

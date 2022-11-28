@@ -63,22 +63,21 @@ public class DatabaseApplication extends Application {
 
   private boolean checkProperties(Properties properties) {
     String[] propertiesSet = {
-      SapsPropertiesConstants.SUBMISSION_REST_SERVER_PORT,
-      SapsPropertiesConstants.Openstack.ObjectStoreService.KEY,
-      SapsPropertiesConstants.PERMANENT_STORAGE_TASKS_DIR,
-      SapsPropertiesConstants.Openstack.IdentityService.API_URL,
-      SapsPropertiesConstants.Openstack.PROJECT_ID,
-      SapsPropertiesConstants.Openstack.USER_ID,
-      SapsPropertiesConstants.Openstack.USER_PASSWORD
+        SapsPropertiesConstants.SUBMISSION_REST_SERVER_PORT,
+        SapsPropertiesConstants.Openstack.ObjectStoreService.KEY,
+        SapsPropertiesConstants.PERMANENT_STORAGE_TASKS_DIR,
+        SapsPropertiesConstants.Openstack.IdentityService.API_URL,
+        SapsPropertiesConstants.Openstack.PROJECT_ID,
+        SapsPropertiesConstants.Openstack.USER_ID,
+        SapsPropertiesConstants.Openstack.USER_PASSWORD
     };
 
     return SapsPropertiesUtil.checkProperties(properties, propertiesSet);
   }
 
   public void startServer() throws Exception {
-    Integer restServerPort =
-        Integer.valueOf(
-            (String) properties.get(SapsPropertiesConstants.SUBMISSION_REST_SERVER_PORT));
+    Integer restServerPort = Integer.valueOf(
+        (String) properties.get(SapsPropertiesConstants.SUBMISSION_REST_SERVER_PORT));
 
     LOGGER.info("Starting service on port [ " + restServerPort + "]");
 
@@ -117,51 +116,36 @@ public class DatabaseApplication extends Application {
     return router;
   }
 
-  /**
-   * This function gets {@code SapsImage} list in {@code Catalog}.
-   *
-   * @return {@code SapsImage} list
-   */
-  public List<SapsImage> getTasks() {
-    return submissionDispatcher.getAllTasks();
+  /** It creates new User in {@code Catalog}. */
+  public void createUser(
+      String userEmail,
+      String userName,
+      String userPass,
+      boolean userState,
+      boolean userNotify,
+      boolean adminRole) {
+    submissionDispatcher.addUser(userEmail, userName, userPass, userState, userNotify, adminRole);
   }
 
-  /**
-   * This function gets tasks with specific state in Catalog.
-   *
-   * @param state task state to be searched
-   * @return tasks list with specific state
-   * @throws SQLException
-   */
-  public List<SapsImage> getTasksInState(ImageTaskState state) throws SQLException {
-    return this.submissionDispatcher.getTasksByState(state);
-  }
-
-  /**
-   * This function get saps image with specific id in Catalog.
-   *
-   * @param taskId task id to be searched
-   * @return saps image with specific id
-   * @throws SQLException
-   */
-  public SapsImage getTask(String taskId) {
-    return submissionDispatcher.getTaskById(taskId);
+  /** It gets {@code SapsUser} in {@code Catalog}. */
+  public SapsUser getUser(String userEmail) {
+    return submissionDispatcher.getUser(userEmail);
   }
 
   /**
    * This function add new tasks in Catalog.
    *
-   * @param lowerLeftLatitude lower left latitude (coordinate)
-   * @param lowerLeftLongitude lower left longitude (coordinate)
-   * @param upperRightLatitude upper right latitude (coordinate)
-   * @param upperRightLongitude upper right longitude (coordinate)
-   * @param initDate initial date
-   * @param endDate end date
+   * @param lowerLeftLatitude        lower left latitude (coordinate)
+   * @param lowerLeftLongitude       lower left longitude (coordinate)
+   * @param upperRightLatitude       upper right latitude (coordinate)
+   * @param upperRightLongitude      upper right longitude (coordinate)
+   * @param initDate                 initial date
+   * @param endDate                  end date
    * @param inputdownloadingPhaseTag inputdownloading phase tag
-   * @param preprocessingPhaseTag preprocessing phase tag
-   * @param processingPhaseTag processing phase tag
-   * @param priority priority of new tasks
-   * @param email user email
+   * @param preprocessingPhaseTag    preprocessing phase tag
+   * @param processingPhaseTag       processing phase tag
+   * @param priority                 priority of new tasks
+   * @param email                    user email
    */
   public List<String> addNewTasks(
       String lowerLeftLatitude,
@@ -190,36 +174,58 @@ public class DatabaseApplication extends Application {
         email);
   }
 
-  /** It creates new User in {@code Catalog}. */
-  public void createUser(
-      String userEmail,
-      String userName,
-      String userPass,
-      boolean userState,
-      boolean userNotify,
-      boolean adminRole) {
-    submissionDispatcher.addUser(userEmail, userName, userPass, userState, userNotify, adminRole);
-  }
-
-  /** It gets {@code SapsUser} in {@code Catalog}. */
-  public SapsUser getUser(String userEmail) {
-    return submissionDispatcher.getUser(userEmail);
+  /**
+   * This function get saps image with specific id in Catalog.
+   *
+   * @param taskId task id to be searched
+   * @return saps image with specific id
+   * @throws SQLException
+   */
+  public SapsImage getTask(String taskId) {
+    return submissionDispatcher.getTask(taskId);
   }
 
   /**
-   * It searches processed {@code SapsImage} list from area (between latitude and longitude
-   * coordinates) between {@param initDate} and {@param endDate} with {@param
-   * inputdownloadingPhaseTag}, {@param preprocessingPhaseTag} and {@param processingPhaseTag} tags.
+   * This function gets {@code SapsImage} list in {@code Catalog}.
    *
-   * @param lowerLeftLatitude lower left latitude (coordinate)
-   * @param lowerLeftLongitude lower left longitude (coordinate)
-   * @param upperRightLatitude upper right latitude (coordinate)
-   * @param upperRightLongitude upper right longitude (coordinate)
-   * @param initDate initial date
-   * @param endDate end date
+   * @return {@code SapsImage} list
+   */
+  public List<SapsImage> getTasks() {
+    return submissionDispatcher.getAllTasks();
+  }
+
+  public List<SapsImage> getTasksOnGoingWithPagination(Integer page, Integer size, String sortField, String sortOrder) {
+    return submissionDispatcher.getTasksOnGoingWithPagination(page, size, sortField, sortOrder);
+  }
+
+  public List<SapsImage> getTasksCompletedWithPagination(Integer page, Integer size, String sortField, String sortOrder) {
+    return submissionDispatcher.getTasksCompletedWithPagination(page, size, sortField, sortOrder);
+  }
+
+  public Integer getTasksCountOnGoing() {
+    return submissionDispatcher.getTasksCountOnGoing();
+  }
+
+  public Integer getTasksCountCompleted() {
+    return submissionDispatcher.getTasksCountCompleted();
+  }
+
+  /**
+   * It searches processed {@code SapsImage} list from area (between latitude and
+   * longitude
+   * coordinates) between {@param initDate} and {@param endDate} with {@param
+   * inputdownloadingPhaseTag}, {@param preprocessingPhaseTag} and
+   * {@param processingPhaseTag} tags.
+   *
+   * @param lowerLeftLatitude        lower left latitude (coordinate)
+   * @param lowerLeftLongitude       lower left longitude (coordinate)
+   * @param upperRightLatitude       upper right latitude (coordinate)
+   * @param upperRightLongitude      upper right longitude (coordinate)
+   * @param initDate                 initial date
+   * @param endDate                  end date
    * @param inputdownloadingPhaseTag inputdownloading phase tag
-   * @param preprocessingPhaseTag preprocessing phase tag
-   * @param processingPhaseTag processing phase tag
+   * @param preprocessingPhaseTag    preprocessing phase tag
+   * @param processingPhaseTag       processing phase tag
    * @return processed {@code SapsImage} list following description
    */
   public List<SapsImage> searchProcessedTasks(
@@ -244,20 +250,14 @@ public class DatabaseApplication extends Application {
         processingPhaseTag);
   }
 
-  public List<SapsImage> getTasksOnGoingWithPagination(Integer page, Integer size, String sortField, String sortOrder) {
-    return submissionDispatcher.getTasksOnGoingWithPagination(page, size, sortField, sortOrder);
+  /**
+   * This function gets tasks with specific state in Catalog.
+   *
+   * @param state task state to be searched
+   * @return tasks list with specific state
+   * @throws SQLException
+   */
+  public List<SapsImage> getTasksInState(ImageTaskState state) throws SQLException {
+    return this.submissionDispatcher.getTasksByState(state);
   }
-
-  public Integer getTasksCountOnGoing() {
-    return submissionDispatcher.getTasksCountOnGoing();
-  }
-
-  public List<SapsImage> getTasksCompletedWithPagination(Integer page, Integer size, String sortField, String sortOrder) {
-    return submissionDispatcher.getTasksCompletedWithPagination(page, size, sortField, sortOrder);
-  }
-
-  public Integer getTasksCountCompleted() {
-    return submissionDispatcher.getTasksCountCompleted();
-  }
-
 }
