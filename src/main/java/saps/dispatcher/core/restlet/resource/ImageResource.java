@@ -51,6 +51,7 @@ public class ImageResource extends BaseResource {
 
   private static final String ADD_IMAGES_MESSAGE_OK = "Tasks successfully added";
   private static final String ADD_IMAGES_MESSAGE_FAILURE = "Failed to add new tasks";
+  private static final String ADD_IMAGES_LANDSAT_NOT_FOUND = "No satellite data was found for this region on that date";
 
   private final Gson gson = new Gson();
 
@@ -247,8 +248,11 @@ public class ImageResource extends BaseResource {
           processingPhaseTag,
           priority,
           email);
-      return new StringRepresentation(gson.toJson(taskIds), MediaType.APPLICATION_JSON);
 
+      if (!taskIds.isEmpty())
+        return new StringRepresentation(ADD_IMAGES_LANDSAT_NOT_FOUND, MediaType.TEXT_PLAIN);
+      else
+        return new StringRepresentation(gson.toJson(taskIds), MediaType.APPLICATION_JSON);
     } catch (Exception e) {
       LOGGER.error("Error while add news tasks.", e);
       return new StringRepresentation(ADD_IMAGES_MESSAGE_FAILURE, MediaType.TEXT_PLAIN);
