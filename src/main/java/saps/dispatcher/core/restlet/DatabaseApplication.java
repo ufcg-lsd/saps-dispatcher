@@ -194,20 +194,22 @@ public class DatabaseApplication extends Application {
     return submissionDispatcher.getAllTasks();
   }
 
-  public List<SapsImage> getTasksOnGoingWithPagination(Integer page, Integer size, String sortField, String sortOrder) {
-    return submissionDispatcher.getTasksOnGoingWithPagination(page, size, sortField, sortOrder);
+  public List<SapsImage> getTasksOngoingWithPagination(String search, Integer page, Integer size,
+      String sortField, String sortOrder) {
+    return submissionDispatcher.getTasksOngoingWithPagination(search, page, size, sortField, sortOrder);
   }
 
-  public List<SapsImage> getTasksCompletedWithPagination(Integer page, Integer size, String sortField, String sortOrder) {
-    return submissionDispatcher.getTasksCompletedWithPagination(page, size, sortField, sortOrder);
+  public List<SapsImage> getTasksCompletedWithPagination(String search, Integer page, Integer size,
+      String sortField, String sortOrder) {
+    return submissionDispatcher.getTasksCompletedWithPagination(search, page, size, sortField, sortOrder);
   }
 
-  public Integer getTasksCountOnGoing() {
-    return submissionDispatcher.getTasksCountOnGoing();
+  public Integer getCountOngoingTasks(String search) {
+    return submissionDispatcher.getCountOngoingTasks(search);
   }
 
-  public Integer getTasksCountCompleted() {
-    return submissionDispatcher.getTasksCountCompleted();
+  public Integer getCountCompletedTasks(String search) {
+    return submissionDispatcher.getCountCompletedTasks(search);
   }
 
   /**

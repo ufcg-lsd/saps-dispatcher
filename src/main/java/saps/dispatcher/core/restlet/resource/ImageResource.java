@@ -75,13 +75,16 @@ public class ImageResource extends BaseResource {
     return responseJSON;
   }
 
-  private JSONObject getTasks(String state, Integer page, Integer size, JSONObject sortJSON) {
+  private JSONObject getTasks(String state, String search, Integer page, Integer size, JSONObject sortJSON) {
     LOGGER.info("Getting all tasks");
 
     String sortField = "";
     String sortOrder = "";
+    Integer tasksCount = 0;
     JSONArray tasksJSON = new JSONArray();
     JSONObject responseJSON = new JSONObject();
+    List<SapsImage> listOfTasks = new ArrayList<SapsImage>();
+    DatabaseApplication app = (DatabaseApplication) getApplication();
 
     try {
       if (sortJSON.length() > 0) {
@@ -89,22 +92,18 @@ public class ImageResource extends BaseResource {
         sortOrder = sortJSON.get(sortField).toString();
       }
 
-      Integer tasksCount;
-      List<SapsImage> listOfTasks = new ArrayList<SapsImage>();
       switch (state) {
         case QUERY_VALUE_ONGOING_TASKS:
-          tasksCount = ((DatabaseApplication) getApplication()).getTasksCountOnGoing();
-          listOfTasks = ((DatabaseApplication) getApplication()).getTasksOnGoingWithPagination(page, size, sortField,
-              sortOrder);
+          listOfTasks = app.getTasksOngoingWithPagination(search, page, size, sortField, sortOrder);
+          tasksCount = app.getCountOngoingTasks(search);
           break;
         case QUERY_VALUE_COMPLETED_TASKS:
-          tasksCount = ((DatabaseApplication) getApplication()).getTasksCountCompleted();
-          listOfTasks = ((DatabaseApplication) getApplication()).getTasksCompletedWithPagination(page, size, sortField,
-              sortOrder);
+          listOfTasks = app.getTasksCompletedWithPagination(search, page, size, sortField, sortOrder);
+          tasksCount = app.getCountCompletedTasks(search);
           break;
         default:
+          listOfTasks = app.getTasks();
           tasksCount = listOfTasks.size();
-          listOfTasks = ((DatabaseApplication) getApplication()).getTasks();
           break;
       }
 
@@ -132,10 +131,10 @@ public class ImageResource extends BaseResource {
     String userEGI = series.getFirstValue(UserResource.REQUEST_ATTR_USER_EGI, true);
     String taskId = series.getFirstValue(QUERY_KEY_TASK_ID, true);
     String state = series.getFirstValue(QUERY_KEY_TASK_STATE, true);
+    String search = series.getFirstValue(QUERY_KEY_PAGINATION_SEARCH, true);
     Integer page = Integer.parseInt(series.getFirstValue(QUERY_KEY_PAGINATION_PAGE, true));
     Integer size = Integer.parseInt(series.getFirstValue(QUERY_KEY_PAGINATION_SIZE, true));
     JSONObject sortJSON = new JSONObject(series.getFirstValue(QUERY_KEY_PAGINATION_SORT, true));
-    // JSONObject searchJSON = new JSONObject(series.getFirstValue(QUERY_KEY_PAGINATION_SEARCH, true));
 
     if (!authenticateUser(userEmail, userPass, userEGI)) {
       throw new ResourceException(HttpStatus.SC_UNAUTHORIZED);
@@ -143,13 +142,8 @@ public class ImageResource extends BaseResource {
 
     if (taskId != null) {
       responseJSON = this.getTaskById(taskId);
-    }
-    // else if (searchJSON.length() > 0) {
-    // responseJSON = this.searchTask(state, page, size, sortJSON, tasksJSON,
-    // responseJSON);
-    // }
-    else {
-      responseJSON = this.getTasks(state, page, size, sortJSON);
+    } else {
+      responseJSON = this.getTasks(state, search, page, size, sortJSON);
     }
 
     return new StringRepresentation(responseJSON.toString(), MediaType.APPLICATION_JSON);
