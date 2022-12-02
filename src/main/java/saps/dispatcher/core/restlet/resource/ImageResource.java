@@ -38,6 +38,7 @@ public class ImageResource extends BaseResource {
 
   private static final String ADD_IMAGES_MESSAGE_OK = "Tasks successfully added";
   private static final String ADD_IMAGES_MESSAGE_FAILURE = "Failed to add new tasks";
+  private static final String ADD_IMAGES_LANDSAT_NOT_FOUND = "No satellite data was found for this region on that date";
 
   private final Gson gson = new Gson();
 
@@ -56,7 +57,7 @@ public class ImageResource extends BaseResource {
 
     if (!authenticateUser(userEmail, userPass, userEGI)) {
       throw new ResourceException(HttpStatus.SC_UNAUTHORIZED);
-    } 
+    }
 
     String taskId = (String) getRequest().getAttributes().get("taskId");
 
@@ -142,55 +143,56 @@ public class ImageResource extends BaseResource {
     String priority = form.getFirstValue(PRIORITY);
     String email = form.getFirstValue(EMAIL);
 
-    String builder =
-        "Creating new image process with configuration:\n"
-            + "\tLower Left: "
-            + lowerLeftLatitude
-            + ", "
-            + lowerLeftLongitude
-            + "\n"
-            + "\tUpper Right: "
-            + upperRightLatitude
-            + ", "
-            + upperRightLongitude
-            + "\n"
-            + "\tInterval: "
-            + initDate
-            + " - "
-            + endDate
-            + "\n"
-            + "\tInputdownloading tag: "
-            + inputdownloadingPhaseTag
-            + "\n"
-            + "\tPreprocessing tag: "
-            + preprocessingPhaseTag
-            + "\n"
-            + "\tProcessing tag: "
-            + processingPhaseTag
-            + "\n"
-            + "\tPriority: "
-            + priority
-            + "\n"
-            + "\tEmail: "
-            + email;
+    String builder = "Creating new image process with configuration:\n"
+        + "\tLower Left: "
+        + lowerLeftLatitude
+        + ", "
+        + lowerLeftLongitude
+        + "\n"
+        + "\tUpper Right: "
+        + upperRightLatitude
+        + ", "
+        + upperRightLongitude
+        + "\n"
+        + "\tInterval: "
+        + initDate
+        + " - "
+        + endDate
+        + "\n"
+        + "\tInputdownloading tag: "
+        + inputdownloadingPhaseTag
+        + "\n"
+        + "\tPreprocessing tag: "
+        + preprocessingPhaseTag
+        + "\n"
+        + "\tProcessing tag: "
+        + processingPhaseTag
+        + "\n"
+        + "\tPriority: "
+        + priority
+        + "\n"
+        + "\tEmail: "
+        + email;
     LOGGER.info(builder);
 
     try {
-      List<String> taskIds =
-          application.addNewTasks(
-              lowerLeftLatitude,
-              lowerLeftLongitude,
-              upperRightLatitude,
-              upperRightLongitude,
-              initDate,
-              endDate,
-              inputdownloadingPhaseTag,
-              preprocessingPhaseTag,
-              processingPhaseTag,
-              priority,
-              email);
-      return new StringRepresentation(gson.toJson(taskIds), MediaType.APPLICATION_JSON);
+      List<String> taskIds = application.addNewTasks(
+          lowerLeftLatitude,
+          lowerLeftLongitude,
+          upperRightLatitude,
+          upperRightLongitude,
+          initDate,
+          endDate,
+          inputdownloadingPhaseTag,
+          preprocessingPhaseTag,
+          processingPhaseTag,
+          priority,
+          email);
 
+      if (!taskIds.isEmpty())
+        return new StringRepresentation(ADD_IMAGES_LANDSAT_NOT_FOUND, MediaType.TEXT_PLAIN);
+      else
+        return new StringRepresentation(gson.toJson(taskIds), MediaType.APPLICATION_JSON);
     } catch (Exception e) {
       LOGGER.error("Error while add news tasks.", e);
       return new StringRepresentation(ADD_IMAGES_MESSAGE_FAILURE, MediaType.TEXT_PLAIN);
