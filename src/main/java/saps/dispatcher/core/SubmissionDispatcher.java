@@ -234,8 +234,10 @@ public class SubmissionDispatcher {
                   digestPreprocessing,
                   processingPhaseTag,
                   digestProcessing);
-          addTimestampTaskInCatalog(task, "updates task [" + taskId + "] timestamp");
-          taskIds.add(taskId);
+	  if (task != null) {
+          	addTimestampTaskInCatalog(task, "updates task [" + taskId + "] timestamp");
+          	taskIds.add(taskId);
+	  }
         }
       }
       cal.add(Calendar.DAY_OF_YEAR, 1);
