@@ -268,21 +268,24 @@ public class SubmissionDispatcher {
         for (String region : regions) {
           String taskId = UUID.randomUUID().toString();
 
-          SapsImage task = addTask(
-              taskId,
-              dataset,
-              region,
-              cal.getTime(),
-              priority,
-              userEmail,
-              inputdownloadingPhaseTag,
-              digestInputdownloading,
-              preprocessingPhaseTag,
-              digestPreprocessing,
-              processingPhaseTag,
-              digestProcessing);
-          addTimestampTaskInCatalog(task, "updates task [" + taskId + "] timestamp");
-          taskIds.add(taskId);
+          SapsImage task =
+              addTask(
+                  taskId,
+                  dataset,
+                  region,
+                  cal.getTime(),
+                  priority,
+                  userEmail,
+                  inputdownloadingPhaseTag,
+                  digestInputdownloading,
+                  preprocessingPhaseTag,
+                  digestPreprocessing,
+                  processingPhaseTag,
+                  digestProcessing);
+	        if (task != null) {
+          	  addTimestampTaskInCatalog(task, "updates task [" + taskId + "] timestamp");
+          	  taskIds.add(taskId);
+          }
         }
       }
       cal.add(Calendar.DAY_OF_YEAR, 1);
