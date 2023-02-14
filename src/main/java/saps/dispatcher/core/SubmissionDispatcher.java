@@ -2,8 +2,21 @@
 package saps.dispatcher.core;
 
 import java.sql.SQLException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.Date;
+import java.util.GregorianCalendar;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
+import java.util.UUID;
+
 import org.apache.log4j.Logger;
+
 import saps.catalog.core.Catalog;
 import saps.catalog.core.jdbc.JDBCCatalog;
 import saps.catalog.core.retry.CatalogUtils;
@@ -22,10 +35,6 @@ public class SubmissionDispatcher {
   private final Catalog catalog;
 
   private static final Logger LOGGER = Logger.getLogger(SubmissionDispatcher.class);
-
-  private void addTimestampTaskInCatalog(SapsImage task, String message) {
-    CatalogUtils.addTimestampTask(catalog, task);
-  }
 
   public SubmissionDispatcher(Catalog catalog) {
     this.catalog = catalog;
@@ -235,8 +244,6 @@ public class SubmissionDispatcher {
       String userEmail)
       throws Exception {
 
-    List<String> taskIds = new LinkedList<String>();
-
     GregorianCalendar cal = new GregorianCalendar();
     cal.setTime(initDate);
     GregorianCalendar endCal = new GregorianCalendar();
@@ -258,39 +265,71 @@ public class SubmissionDispatcher {
     Set<String> regions = RegionUtil.regionsFromArea(
         lowerLeftLatitude, lowerLeftLongitude, upperRightLatitude, upperRightLongitude);
 
-    while (cal.before(endCal)) {
-      int startingYear = cal.get(Calendar.YEAR);
-      List<String> datasets = DatasetUtil.getSatsInOperationByYear(startingYear);
+    List<String> taskIds = new LinkedList<String>();
+    List<String> taskIdsSync = Collections.synchronizedList(taskIds);
 
-      for (String dataset : datasets) {
-        LOGGER.debug("Adding new tasks with dataset " + dataset);
+    List<Object[]> tasksData = new ArrayList<Object[]>();
+    List<Object[]> tasksDataSync = Collections.synchronizedList(tasksData);
 
-        for (String region : regions) {
-          String taskId = UUID.randomUUID().toString();
+    Thread producer = new Thread(() -> {
+      while (cal.before(endCal)) {
+        int startingYear = cal.get(Calendar.YEAR);
+        List<String> datasets = DatasetUtil.getSatsInOperationByYear(startingYear);
+        for (String dataset : datasets) {
+          for (String region : regions) {
+            tasksDataSync.add(new Object[] { cal.getTime(), dataset, region });
+          }
+        };
+        cal.add(Calendar.DAY_OF_YEAR, 1);
+      }
+    });
+    producer.start();
 
-          SapsImage task =
-              addTask(
-                  taskId,
-                  dataset,
-                  region,
-                  cal.getTime(),
-                  priority,
-                  userEmail,
-                  inputdownloadingPhaseTag,
-                  digestInputdownloading,
-                  preprocessingPhaseTag,
-                  digestPreprocessing,
-                  processingPhaseTag,
-                  digestProcessing);
-	        if (task != null) {
-          	  addTimestampTaskInCatalog(task, "updates task [" + taskId + "] timestamp");
-          	  taskIds.add(taskId);
+    Thread[] consumers = new Thread[32];
+    for (int i = 0; i < consumers.length; i++) {
+      consumers[i] = new Thread(() -> {
+        while (producer.isAlive() || !tasksDataSync.isEmpty()) {
+          Object[] tData = tasksDataSync.remove(0);
+          if (tData != null) {
+            Date day = (Date) tData[0];
+            String dataset = (String) tData[1];
+            String region = (String) tData[2];
+
+            String taskId = UUID.randomUUID().toString();
+            SapsImage task = addTask(
+                taskId,
+                dataset,
+                region,
+                day,
+                priority,
+                userEmail,
+                inputdownloadingPhaseTag,
+                digestInputdownloading,
+                preprocessingPhaseTag,
+                digestPreprocessing,
+                processingPhaseTag,
+                digestProcessing);
+            if (task != null) {
+              LOGGER.debug("Adding new tasks with dataset " + dataset + " and date " + day + " and region " + region);
+              taskIdsSync.add(taskId);
+            }
           }
         }
-      }
-      cal.add(Calendar.DAY_OF_YEAR, 1);
+      });
+      consumers[i].start();
     }
-    return taskIds;
+
+    try {
+      producer.join();
+
+      for (int i = 0; i < consumers.length; i++) {
+        consumers[i].join();
+      }
+    } catch (InterruptedException ex) {
+      ex.printStackTrace();
+    }
+
+    return taskIdsSync;
   }
 
   public List<SapsImage> getAllTasks() {
