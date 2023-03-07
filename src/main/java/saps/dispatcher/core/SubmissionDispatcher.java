@@ -7,10 +7,8 @@ import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.GregorianCalendar;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.UUID;
@@ -21,6 +19,7 @@ import saps.catalog.core.Catalog;
 import saps.catalog.core.jdbc.JDBCCatalog;
 import saps.catalog.core.retry.CatalogUtils;
 import saps.common.core.model.SapsImage;
+import saps.common.core.model.SapsLandsatImage;
 import saps.common.core.model.SapsUser;
 import saps.common.core.model.enums.ImageTaskState;
 import saps.common.utils.ExecutionScriptTag;
@@ -133,11 +132,8 @@ public class SubmissionDispatcher {
    *                                 (processingPhaseTag)
    * @return the new {@code SapsImage} created and added to this {@code Catalog}.
    */
-  private SapsImage addTask(
-      String taskId,
-      String dataset,
-      String region,
-      Date date,
+  private void addTask(
+      List<Object[]> tasksDataSync,
       int priority,
       String userEmail,
       String inputdownloadingPhaseTag,
@@ -146,21 +142,73 @@ public class SubmissionDispatcher {
       String digestPreprocessing,
       String processingPhaseTag,
       String digestProcessing) {
-    return CatalogUtils.addNewTask(
+
+    Object[] tData = tasksDataSync.remove(0);
+    if (tData != null) {
+      String taskId = (String) tData[0];
+      Date day = (Date) tData[1];
+      String dataset = (String) tData[2];
+      String region = (String) tData[3];
+
+      LOGGER.debug("Adding new tasks with dataset " + dataset + " and date " + day + " and region " + region);
+      CatalogUtils.addNewTask(
+          catalog,
+          taskId,
+          dataset,
+          region,
+          day,
+          priority,
+          userEmail,
+          inputdownloadingPhaseTag,
+          digestInputdownloading,
+          preprocessingPhaseTag,
+          digestPreprocessing,
+          processingPhaseTag,
+          digestProcessing,
+          "add new task [" + taskId + "]");
+    }
+  }
+
+  private void addUserJob(
+      String jobId,
+      String lowerLeftLatitude,
+      String lowerLeftLongitude,
+      String upperRightLatitude,
+      String upperRightLongitude,
+      Date startDate,
+      Date endDate,
+      int priority,
+      String jobLabel,
+      List<String> tasksIds,
+      String userEmail) {
+    LOGGER.debug("Adding new job with label " + jobLabel + " and priority " + priority);
+    LOGGER.info(userEmail);
+    LOGGER.debug("Adding new job with label " + jobLabel + " and priority " + priority);
+    CatalogUtils.addNewUserJob(
         catalog,
-        taskId,
-        dataset,
-        region,
-        date,
-        priority,
+        jobId,
+        lowerLeftLatitude,
+        lowerLeftLongitude,
+        upperRightLatitude,
+        upperRightLongitude,
         userEmail,
-        inputdownloadingPhaseTag,
-        digestInputdownloading,
-        preprocessingPhaseTag,
-        digestPreprocessing,
-        processingPhaseTag,
-        digestProcessing,
-        "add new task [" + taskId + "]");
+        jobLabel,
+        startDate,
+        endDate,
+        priority,
+        tasksIds,
+        "add new job [" + jobLabel + "]");
+  }
+
+  private Boolean validateLandsatImage(String region, Date date) {
+    SapsLandsatImage sapsLandsatImage = CatalogUtils.validateLandsatImage(
+      catalog, 
+      region, 
+      date, 
+      "Validate Landsat Image " + date + " " + region
+    );
+
+    return sapsLandsatImage != null;
   }
 
   /**
@@ -230,7 +278,7 @@ public class SubmissionDispatcher {
    *                                 information is obtained automatically
    *                                 by the authenticated user on the platform).
    */
-  public List<String> addTasks(
+  public List<String> createJobSubmission(
       String lowerLeftLatitude,
       String lowerLeftLongitude,
       String upperRightLatitude,
@@ -241,7 +289,8 @@ public class SubmissionDispatcher {
       String preprocessingPhaseTag,
       String processingPhaseTag,
       int priority,
-      String userEmail)
+      String userEmail,
+      String label)
       throws Exception {
 
     GregorianCalendar cal = new GregorianCalendar();
@@ -266,21 +315,32 @@ public class SubmissionDispatcher {
         lowerLeftLatitude, lowerLeftLongitude, upperRightLatitude, upperRightLongitude);
 
     List<String> taskIds = new LinkedList<String>();
-    List<String> taskIdsSync = Collections.synchronizedList(taskIds);
-
     List<Object[]> tasksData = new ArrayList<Object[]>();
     List<Object[]> tasksDataSync = Collections.synchronizedList(tasksData);
+    String taskIdBase = inputdownloadingPhaseTag.substring(0, 3) + preprocessingPhaseTag.substring(0, 3)
+        + processingPhaseTag.substring(0, 3);
+
+    // qual a ideia:
+    // 1. gerar primeiro os ids
+    // 2. depois adicionar no BD
+    // Logo, é preciso gerar os ids antes do addTasks. Dessa forma, o
+    // validateLandsatImages subiria de nivel
 
     Thread producer = new Thread(() -> {
       while (cal.before(endCal)) {
-        int startingYear = cal.get(Calendar.YEAR);
-        List<String> datasets = DatasetUtil.getSatsInOperationByYear(startingYear);
-        for (String dataset : datasets) {
-          for (String region : regions) {
-            tasksDataSync.add(new Object[] { cal.getTime(), dataset, region });
-          }
-        };
-        cal.add(Calendar.DAY_OF_YEAR, 1);
+        for (String region : regions) {
+          Boolean isValidImage = validateLandsatImage(region, cal.getTime());
+          if (isValidImage) {
+            int startingYear = cal.get(Calendar.YEAR);
+            List<String> datasets = DatasetUtil.getSatsInOperationByYear(startingYear);
+            for (String dataset : datasets) {
+              String taskId = taskIdBase + dataset + "_" + cal.getTime() + "_" + region;
+              tasksDataSync.add(new Object[] { taskId, cal.getTime(), dataset, region });
+              taskIds.add(taskId);
+            }
+          };
+          cal.add(Calendar.DAY_OF_YEAR, 1);
+        }
       }
     });
     producer.start();
@@ -289,31 +349,17 @@ public class SubmissionDispatcher {
     for (int i = 0; i < consumers.length; i++) {
       consumers[i] = new Thread(() -> {
         while (producer.isAlive() || !tasksDataSync.isEmpty()) {
-          Object[] tData = tasksDataSync.remove(0);
-          if (tData != null) {
-            Date day = (Date) tData[0];
-            String dataset = (String) tData[1];
-            String region = (String) tData[2];
-
-            String taskId = UUID.randomUUID().toString();
-            SapsImage task = addTask(
-                taskId,
-                dataset,
-                region,
-                day,
-                priority,
-                userEmail,
-                inputdownloadingPhaseTag,
-                digestInputdownloading,
-                preprocessingPhaseTag,
-                digestPreprocessing,
-                processingPhaseTag,
-                digestProcessing);
-            if (task != null) {
-              LOGGER.debug("Adding new tasks with dataset " + dataset + " and date " + day + " and region " + region);
-              taskIdsSync.add(taskId);
-            }
-          }
+          LOGGER.info("tasksDataSync size: " + tasksDataSync.size());
+          addTask(
+              tasksDataSync,
+              priority,
+              userEmail,
+              inputdownloadingPhaseTag,
+              digestInputdownloading,
+              preprocessingPhaseTag,
+              digestPreprocessing,
+              processingPhaseTag,
+              digestProcessing);
         }
       });
       consumers[i].start();
@@ -321,6 +367,19 @@ public class SubmissionDispatcher {
 
     try {
       producer.join();
+      String jobId = UUID.randomUUID().toString();
+      addUserJob(
+          jobId,
+          lowerLeftLatitude,
+          lowerLeftLongitude,
+          upperRightLatitude,
+          upperRightLongitude,
+          initDate,
+          endDate,
+          priority,
+          label,
+          taskIds,
+          userEmail);
 
       for (int i = 0; i < consumers.length; i++) {
         consumers[i].join();
@@ -329,7 +388,7 @@ public class SubmissionDispatcher {
       ex.printStackTrace();
     }
 
-    return taskIdsSync;
+    return taskIds;
   }
 
   public List<SapsImage> getAllTasks() {

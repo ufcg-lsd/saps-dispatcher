@@ -146,8 +146,9 @@ public class DatabaseApplication extends Application {
    * @param processingPhaseTag       processing phase tag
    * @param priority                 priority of new tasks
    * @param email                    user email
+   * @param label                    user label
    */
-  public List<String> addNewTasks(
+  public List<String> createJobSubmission(
       String lowerLeftLatitude,
       String lowerLeftLongitude,
       String upperRightLatitude,
@@ -158,9 +159,10 @@ public class DatabaseApplication extends Application {
       String preprocessingPhaseTag,
       String processingPhaseTag,
       String priority,
-      String email)
+      String email, 
+      String label)
       throws Exception {
-    return submissionDispatcher.addTasks(
+    return submissionDispatcher.createJobSubmission(
         lowerLeftLatitude,
         lowerLeftLongitude,
         upperRightLatitude,
@@ -171,7 +173,8 @@ public class DatabaseApplication extends Application {
         preprocessingPhaseTag,
         processingPhaseTag,
         Integer.parseInt(priority),
-        email);
+        email, 
+        label);
   }
 
   /**

@@ -48,6 +48,7 @@ public class ImageResource extends BaseResource {
   private static final String PROCESSING_ALGORITHM_EXECUTION_TAG = "algorithmExecutionTag";
   private static final String PRIORITY = "priority";
   private static final String EMAIL = "email";
+  private static final String LABEL = "label";
 
   private static final String ADD_IMAGES_MESSAGE_OK = "Tasks successfully added";
   private static final String ADD_IMAGES_MESSAGE_FAILURE = "Failed to add new tasks";
@@ -150,7 +151,7 @@ public class ImageResource extends BaseResource {
   }
 
   @Post
-  public StringRepresentation insertTasks(Representation entity) {
+  public StringRepresentation createJobSubmission(Representation entity) {
     Form form = new Form(entity);
 
     String userEmail = form.getFirstValue(UserResource.REQUEST_ATTR_USER_EMAIL, true);
@@ -201,6 +202,7 @@ public class ImageResource extends BaseResource {
           Status.CLIENT_ERROR_BAD_REQUEST, "Algorithm Execution must be informed.");
     String priority = form.getFirstValue(PRIORITY);
     String email = form.getFirstValue(EMAIL);
+    String label = form.getFirstValue(LABEL);
 
     String builder = "Creating new image process with configuration:\n"
         + "\tLower Left: "
@@ -231,11 +233,14 @@ public class ImageResource extends BaseResource {
         + priority
         + "\n"
         + "\tEmail: "
-        + email;
+        + email
+        + "\n"
+        + "\tLabel: "
+        + label;
     LOGGER.info(builder);
 
     try {
-      List<String> taskIds = application.addNewTasks(
+      List<String> taskIds = application.createJobSubmission(
           lowerLeftLatitude,
           lowerLeftLongitude,
           upperRightLatitude,
@@ -246,7 +251,8 @@ public class ImageResource extends BaseResource {
           preprocessingPhaseTag,
           processingPhaseTag,
           priority,
-          email);
+          email,
+          label);
       return new StringRepresentation(gson.toJson(taskIds), MediaType.APPLICATION_JSON);
 
     } catch (Exception e) {
