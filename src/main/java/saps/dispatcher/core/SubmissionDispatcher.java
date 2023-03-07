@@ -2,12 +2,12 @@
 package saps.dispatcher.core;
 
 import java.sql.SQLException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.GregorianCalendar;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
@@ -143,29 +143,33 @@ public class SubmissionDispatcher {
       String processingPhaseTag,
       String digestProcessing) {
 
-    Object[] tData = tasksDataSync.remove(0);
-    if (tData != null) {
-      String taskId = (String) tData[0];
-      Date day = (Date) tData[1];
-      String dataset = (String) tData[2];
-      String region = (String) tData[3];
+    try {
+      Object[] tData = tasksDataSync.remove(0);
+      if (tData != null) {
+        String taskId = (String) tData[0];
+        Date day = (Date) tData[1];
+        String dataset = (String) tData[2];
+        String region = (String) tData[3];
 
-      LOGGER.debug("Adding new tasks with dataset " + dataset + " and date " + day + " and region " + region);
-      CatalogUtils.addNewTask(
-          catalog,
-          taskId,
-          dataset,
-          region,
-          day,
-          priority,
-          userEmail,
-          inputdownloadingPhaseTag,
-          digestInputdownloading,
-          preprocessingPhaseTag,
-          digestPreprocessing,
-          processingPhaseTag,
-          digestProcessing,
-          "add new task [" + taskId + "]");
+        LOGGER.debug("Adding new tasks with dataset " + dataset + " and date " + day + " and region " + region);
+        CatalogUtils.addNewTask(
+            catalog,
+            taskId,
+            dataset,
+            region,
+            day,
+            priority,
+            userEmail,
+            inputdownloadingPhaseTag,
+            digestInputdownloading,
+            preprocessingPhaseTag,
+            digestPreprocessing,
+            processingPhaseTag,
+            digestProcessing,
+            "add new task [" + taskId + "]");
+      }
+    } catch (Exception e) {
+      LOGGER.error("Error while adding new task", e);
     }
   }
 
@@ -181,9 +185,6 @@ public class SubmissionDispatcher {
       String jobLabel,
       List<String> tasksIds,
       String userEmail) {
-    LOGGER.debug("Adding new job with label " + jobLabel + " and priority " + priority);
-    LOGGER.info(userEmail);
-    LOGGER.debug("Adding new job with label " + jobLabel + " and priority " + priority);
     CatalogUtils.addNewUserJob(
         catalog,
         jobId,
@@ -202,11 +203,10 @@ public class SubmissionDispatcher {
 
   private Boolean validateLandsatImage(String region, Date date) {
     SapsLandsatImage sapsLandsatImage = CatalogUtils.validateLandsatImage(
-      catalog, 
-      region, 
-      date, 
-      "Validate Landsat Image " + date + " " + region
-    );
+        catalog,
+        region,
+        date,
+        "Validate Landsat Image " + date + " " + region);
 
     return sapsLandsatImage != null;
   }
@@ -314,17 +314,11 @@ public class SubmissionDispatcher {
     Set<String> regions = RegionUtil.regionsFromArea(
         lowerLeftLatitude, lowerLeftLongitude, upperRightLatitude, upperRightLongitude);
 
-    List<String> taskIds = new LinkedList<String>();
+    List<String> tasksIds = new ArrayList<String>();
     List<Object[]> tasksData = new ArrayList<Object[]>();
     List<Object[]> tasksDataSync = Collections.synchronizedList(tasksData);
-    String taskIdBase = inputdownloadingPhaseTag.substring(0, 3) + preprocessingPhaseTag.substring(0, 3)
-        + processingPhaseTag.substring(0, 3);
-
-    // qual a ideia:
-    // 1. gerar primeiro os ids
-    // 2. depois adicionar no BD
-    // Logo, é preciso gerar os ids antes do addTasks. Dessa forma, o
-    // validateLandsatImages subiria de nivel
+    String taskIdBase = inputdownloadingPhaseTag.substring(0, 3) + "_" + preprocessingPhaseTag + "_"
+        + processingPhaseTag.replace("-", "") + "_";
 
     Thread producer = new Thread(() -> {
       while (cal.before(endCal)) {
@@ -334,9 +328,10 @@ public class SubmissionDispatcher {
             int startingYear = cal.get(Calendar.YEAR);
             List<String> datasets = DatasetUtil.getSatsInOperationByYear(startingYear);
             for (String dataset : datasets) {
-              String taskId = taskIdBase + dataset + "_" + cal.getTime() + "_" + region;
+              String date = new SimpleDateFormat("yyyyMMdd").format(cal.getTime());
+              String taskId = taskIdBase + dataset + "_" + date + "_" + region;
               tasksDataSync.add(new Object[] { taskId, cal.getTime(), dataset, region });
-              taskIds.add(taskId);
+              tasksIds.add(taskId);
             }
           };
           cal.add(Calendar.DAY_OF_YEAR, 1);
@@ -349,17 +344,20 @@ public class SubmissionDispatcher {
     for (int i = 0; i < consumers.length; i++) {
       consumers[i] = new Thread(() -> {
         while (producer.isAlive() || !tasksDataSync.isEmpty()) {
-          LOGGER.info("tasksDataSync size: " + tasksDataSync.size());
-          addTask(
-              tasksDataSync,
-              priority,
-              userEmail,
-              inputdownloadingPhaseTag,
-              digestInputdownloading,
-              preprocessingPhaseTag,
-              digestPreprocessing,
-              processingPhaseTag,
-              digestProcessing);
+          synchronized (tasksDataSync) {
+            if (!tasksDataSync.isEmpty()) {
+              addTask(
+                  tasksDataSync,
+                  priority,
+                  userEmail,
+                  inputdownloadingPhaseTag,
+                  digestInputdownloading,
+                  preprocessingPhaseTag,
+                  digestPreprocessing,
+                  processingPhaseTag,
+                  digestProcessing);
+            }
+          }
         }
       });
       consumers[i].start();
@@ -378,7 +376,7 @@ public class SubmissionDispatcher {
           endDate,
           priority,
           label,
-          taskIds,
+          tasksIds,
           userEmail);
 
       for (int i = 0; i < consumers.length; i++) {
@@ -388,7 +386,7 @@ public class SubmissionDispatcher {
       ex.printStackTrace();
     }
 
-    return taskIds;
+    return tasksIds;
   }
 
   public List<SapsImage> getAllTasks() {
