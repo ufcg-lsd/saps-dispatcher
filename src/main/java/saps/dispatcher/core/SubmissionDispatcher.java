@@ -21,6 +21,7 @@ import saps.catalog.core.retry.CatalogUtils;
 import saps.common.core.model.SapsImage;
 import saps.common.core.model.SapsLandsatImage;
 import saps.common.core.model.SapsUser;
+import saps.common.core.model.SapsUserJob;
 import saps.common.core.model.enums.ImageTaskState;
 import saps.common.utils.ExecutionScriptTag;
 import saps.common.utils.ExecutionScriptTagUtil;
@@ -173,6 +174,27 @@ public class SubmissionDispatcher {
     }
   }
 
+  /**
+   * It adds a new Job in {@code Catalog}.<br>
+   * 
+   * @param jobId               an unique identifier for the SAPS job.
+   * @param lowerLeftLatitude   is the latitude of the lower left corner of the
+   *                            region of interest
+   * @param lowerLeftLongitude  is the longitude of the lower left corner of the
+   *                            region of interest
+   * @param upperRightLatitude  is the latitude of the upper right corner of the
+   *                            region of interest
+   * @param upperRightLongitude is the longitude of the upper right corner of the
+   *                            region of interest
+   * @param startDate           is the start date of the region of interest
+   * @param endDate             is the end date of the region of interest
+   * @param priority            is an integer in the [0, 31] range that indicates
+   *                            the priority of job processing.
+   * @param jobLabel            is the label of the job
+   * @param tasksIds            is the list of tasks ids
+   * @param userEmail           it is the email of the user that has submitted the
+   *                            job
+   */
   private void addUserJob(
       String jobId,
       String lowerLeftLatitude,
@@ -201,6 +223,12 @@ public class SubmissionDispatcher {
         "add new job [" + jobLabel + "]");
   }
 
+  /**
+   * It checks if the {@code SapsImage} is valid.
+   * @param region is the location of the satellite data following the global
+   * @param date is the date on which the satellite data was collected following
+   * @return true if the {@code SapsImage} is valid, false otherwise.
+   */
   private Boolean validateLandsatImage(String region, Date date) {
     SapsLandsatImage sapsLandsatImage = CatalogUtils.validateLandsatImage(
         catalog,
@@ -333,7 +361,8 @@ public class SubmissionDispatcher {
               tasksDataSync.add(new Object[] { taskId, cal.getTime(), dataset, region });
               tasksIds.add(taskId);
             }
-          };
+          }
+          ;
           cal.add(Calendar.DAY_OF_YEAR, 1);
         }
       }
@@ -389,10 +418,6 @@ public class SubmissionDispatcher {
     return tasksIds;
   }
 
-  public List<SapsImage> getAllTasks() {
-    return CatalogUtils.getAllTasks(catalog, "get all tasks");
-  }
-
   public SapsImage getTask(String taskId) {
     return CatalogUtils.getTaskById(catalog, taskId, "gets task with id [" + taskId + "]");
   }
@@ -401,24 +426,18 @@ public class SubmissionDispatcher {
     return CatalogUtils.getTasks(catalog, state);
   }
 
-  public List<SapsImage> getTasksOngoingWithPagination(String search, Integer page, Integer size,
-      String sortField, String sortOrder) {
-    return CatalogUtils.getTasksOngoingWithPagination(catalog, search, page, size, sortField,
-        sortOrder, "get paginated ongoing tasks");
+  public List<SapsImage> getAllTasks() {
+    return CatalogUtils.getAllTasks(catalog, "get all tasks");
   }
 
-  public List<SapsImage> getTasksCompletedWithPagination(String search, Integer page, Integer size,
-      String sortField, String sortOrder) {
-    return CatalogUtils.getTasksCompletedWithPagination(catalog, search, page, size, sortField,
-        sortOrder, "get paginated completed tasks");
+  public List<SapsUserJob> getAllJobs(String state, String search, Integer page, Integer size, String sortField,
+      String sortOrder, boolean withoutTasks) {
+    return CatalogUtils.getUserJobs(catalog, search, page, size, sortField,
+        sortOrder, "get jobs");
   }
 
-  public Integer getCountOngoingTasks(String search) {
-    return CatalogUtils.getCountOngoingTasks(catalog, search, "get ongoing amount of tasks");
-  }
-
-  public Integer getCountCompletedTasks(String search) {
-    return CatalogUtils.getCountCompletedTasks(catalog, search, "get completed amount of tasks");
+  public Integer getJobsCount(String state) {
+    return CatalogUtils.getUserJobsCount(catalog, state, "get amount of jobs");
   }
 
   /**

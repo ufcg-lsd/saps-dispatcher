@@ -24,6 +24,7 @@ import org.restlet.util.Series;
 import com.google.gson.Gson;
 
 import saps.common.core.model.SapsImage;
+import saps.common.core.model.SapsUserJob;
 import saps.dispatcher.core.restlet.DatabaseApplication;
 
 public class ImageResource extends BaseResource {
@@ -32,6 +33,7 @@ public class ImageResource extends BaseResource {
 
   private static final String QUERY_KEY_TASK_ID = "taskId";
   private static final String QUERY_KEY_TASK_STATE = "taskState";
+  private static final String QUERY_KEY_WITHOUT_TASKS = "withoutTasks";
   private static final String QUERY_KEY_PAGINATION_PAGE = "page";
   private static final String QUERY_KEY_PAGINATION_SIZE = "size";
   private static final String QUERY_KEY_PAGINATION_SORT = "sort";
@@ -51,7 +53,7 @@ public class ImageResource extends BaseResource {
   private static final String LABEL = "label";
 
   private static final String ADD_IMAGES_MESSAGE_OK = "Tasks successfully added";
-  private static final String ADD_IMAGES_MESSAGE_FAILURE = "Failed to add new tasks";
+  private static final String ADD_JOB_MESSAGE_FAILURE = "Failed to add new jobs";
 
   private final Gson gson = new Gson();
 
@@ -76,11 +78,9 @@ public class ImageResource extends BaseResource {
     return responseJSON;
   }
 
-  private JSONObject getTasks(String state, String search, Integer page, Integer size, JSONObject sortJSON) {
+  private JSONObject getAllJTasks(String state, String search, Integer page, Integer size, JSONObject sortJSON) {
     LOGGER.info("Getting all tasks");
 
-    String sortField = "";
-    String sortOrder = "";
     Integer tasksCount = 0;
     JSONArray tasksJSON = new JSONArray();
     JSONObject responseJSON = new JSONObject();
@@ -88,25 +88,8 @@ public class ImageResource extends BaseResource {
     DatabaseApplication app = (DatabaseApplication) getApplication();
 
     try {
-      if (sortJSON.length() > 0) {
-        sortField = sortJSON.keys().next().toString();
-        sortOrder = sortJSON.get(sortField).toString();
-      }
-
-      switch (state) {
-        case QUERY_VALUE_ONGOING_TASKS:
-          listOfTasks = app.getTasksOngoingWithPagination(search, page, size, sortField, sortOrder);
-          tasksCount = app.getCountOngoingTasks(search);
-          break;
-        case QUERY_VALUE_COMPLETED_TASKS:
-          listOfTasks = app.getTasksCompletedWithPagination(search, page, size, sortField, sortOrder);
-          tasksCount = app.getCountCompletedTasks(search);
-          break;
-        default:
-          listOfTasks = app.getTasks();
-          tasksCount = listOfTasks.size();
-          break;
-      }
+      listOfTasks = app.getTasks();
+      tasksCount = listOfTasks.size();
 
       for (SapsImage imageTask : listOfTasks) {
         tasksJSON.put(imageTask.toJSON());
@@ -123,29 +106,40 @@ public class ImageResource extends BaseResource {
 
   @SuppressWarnings("unchecked")
   @Get
-  public Representation getTasks() throws Exception {
-    JSONObject responseJSON = new JSONObject();
-
+  public Representation getAllJobs() throws Exception {    
     Series<Header> series = (Series<Header>) getRequestAttributes().get("org.restlet.http.headers");
     String userEmail = series.getFirstValue(UserResource.REQUEST_ATTR_USER_EMAIL, true);
     String userPass = series.getFirstValue(UserResource.REQUEST_ATTR_USERPASS, true);
     String userEGI = series.getFirstValue(UserResource.REQUEST_ATTR_USER_EGI, true);
-    String taskId = series.getFirstValue(QUERY_KEY_TASK_ID, true);
     String state = series.getFirstValue(QUERY_KEY_TASK_STATE, true);
     String search = series.getFirstValue(QUERY_KEY_PAGINATION_SEARCH, true);
     Integer page = Integer.parseInt(series.getFirstValue(QUERY_KEY_PAGINATION_PAGE, true));
     Integer size = Integer.parseInt(series.getFirstValue(QUERY_KEY_PAGINATION_SIZE, true));
+    Boolean withoutTasks = Boolean.parseBoolean(series.getFirstValue(QUERY_KEY_WITHOUT_TASKS, true));
     JSONObject sortJSON = new JSONObject(series.getFirstValue(QUERY_KEY_PAGINATION_SORT, true));
-
+    
     if (!authenticateUser(userEmail, userPass, userEGI)) {
       throw new ResourceException(HttpStatus.SC_UNAUTHORIZED);
     }
+    
+    String sortField = "";
+    String sortOrder = "";
+    JSONArray jobsJSON = new JSONArray();
+    JSONObject responseJSON = new JSONObject();
 
-    if (taskId != null) {
-      responseJSON = this.getTaskById(taskId);
-    } else {
-      responseJSON = this.getTasks(state, search, page, size, sortJSON);
+    if (sortJSON.length() > 0) {
+      sortField = sortJSON.keys().next().toString();
+      sortOrder = sortJSON.get(sortField).toString();
     }
+
+    Integer jobsCount = application.getJobsCount(state);
+    List<SapsUserJob> jobList = application.getAllJobs(state, search, page, size, sortField, sortOrder, withoutTasks);    
+    for (SapsUserJob userJob : jobList) {
+      jobsJSON.put(userJob.toJSON());
+    }
+
+    responseJSON.put("jobs", jobsJSON); 
+    responseJSON.put("jobsCount", jobsCount); 
 
     return new StringRepresentation(responseJSON.toString(), MediaType.APPLICATION_JSON);
   }
@@ -257,7 +251,7 @@ public class ImageResource extends BaseResource {
 
     } catch (Exception e) {
       LOGGER.error("Error while add news tasks.", e);
-      return new StringRepresentation(ADD_IMAGES_MESSAGE_FAILURE, MediaType.TEXT_PLAIN);
+      return new StringRepresentation(ADD_JOB_MESSAGE_FAILURE, MediaType.TEXT_PLAIN);
     }
   }
 }

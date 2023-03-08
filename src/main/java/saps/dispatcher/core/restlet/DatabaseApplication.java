@@ -19,6 +19,7 @@ import org.restlet.service.ConnectorService;
 import org.restlet.service.CorsService;
 import saps.common.core.model.SapsImage;
 import saps.common.core.model.SapsUser;
+import saps.common.core.model.SapsUserJob;
 import saps.common.core.model.enums.ImageTaskState;
 import saps.common.exceptions.SapsException;
 import saps.common.utils.SapsPropertiesConstants;
@@ -177,6 +178,14 @@ public class DatabaseApplication extends Application {
         label);
   }
 
+  public List<SapsUserJob> getAllJobs(String state, String search, Integer page, Integer size, String sortField, String sortOrder, boolean withoutTasks) {
+    return submissionDispatcher.getAllJobs(state, search, page, size, sortField, sortOrder, withoutTasks);
+  }
+
+  public Integer getJobsCount(String state) {
+    return submissionDispatcher.getJobsCount(state);
+  }
+
   /**
    * This function get saps image with specific id in Catalog.
    *
@@ -195,24 +204,6 @@ public class DatabaseApplication extends Application {
    */
   public List<SapsImage> getTasks() {
     return submissionDispatcher.getAllTasks();
-  }
-
-  public List<SapsImage> getTasksOngoingWithPagination(String search, Integer page, Integer size,
-      String sortField, String sortOrder) {
-    return submissionDispatcher.getTasksOngoingWithPagination(search, page, size, sortField, sortOrder);
-  }
-
-  public List<SapsImage> getTasksCompletedWithPagination(String search, Integer page, Integer size,
-      String sortField, String sortOrder) {
-    return submissionDispatcher.getTasksCompletedWithPagination(search, page, size, sortField, sortOrder);
-  }
-
-  public Integer getCountOngoingTasks(String search) {
-    return submissionDispatcher.getCountOngoingTasks(search);
-  }
-
-  public Integer getCountCompletedTasks(String search) {
-    return submissionDispatcher.getCountCompletedTasks(search);
   }
 
   /**
