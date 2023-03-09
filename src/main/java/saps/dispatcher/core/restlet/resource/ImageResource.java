@@ -136,10 +136,11 @@ public class ImageResource extends BaseResource {
     }
 
     if (jobId != null) {
-      // SapsUserJob userJob = application.getJobTasks(jobId, search, page, size, sortField, sortOrder);
-      // jobsJSON.put(userJob.toJSON());
-      // responseJSON.put("tasks", jobsJSON);
-      // responseJSON.put("tasksCount", 1); //edit this
+      SapsImage jobTasks = application.getJobTasks(jobId, search, page, size, sortField, sortOrder);
+      Integer tasksCount = application.getJobTasksCount(state, search, allOngoingJobs);
+      jobsJSON.put(jobTasks.toJSON());
+      responseJSON.put("tasks", jobsJSON);
+      responseJSON.put("tasksCount", tasksCount); //edit this
     } else {
       Integer jobsCount = application.getJobsCount(state, search, allOngoingJobs);
       List<SapsUserJob> jobList = application.getAllJobs(state, search, page, size, sortField, sortOrder, withoutTasks, allOngoingJobs);

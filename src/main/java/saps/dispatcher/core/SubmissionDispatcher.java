@@ -439,6 +439,15 @@ public class SubmissionDispatcher {
     return CatalogUtils.getUserJobsCount(catalog, state, search, allOngoingJobs, "get amount of jobs");
   }
 
+  public List<SapsImage> getJobTasks(String jobId, String state, String search, Integer page,
+      Integer size, String sortField, String sortOrder) {
+    return CatalogUtils.getUserJobTasks(catalog, jobId, state, search, page, size, sortField, sortOrder, "get job tasks");
+  }
+
+  public Integer getJobTasksCount(String jobId, String state, String search) {
+    return CatalogUtils.getUserJobTasksCount(catalog, jobId, state, search, "get amount of tasks");
+  }
+
   /**
    * It gets processed {@code SapsImage} in {@code Catalog} by filtering for
    * parameters.

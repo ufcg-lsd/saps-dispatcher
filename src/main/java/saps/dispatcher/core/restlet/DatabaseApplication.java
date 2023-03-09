@@ -195,6 +195,15 @@ public class DatabaseApplication extends Application {
     return submissionDispatcher.getJobsCount(state, search, allOngoingJobs);
   }
 
+  public List<SapsImage> getJobTasks(String jobId, String state, String search, Integer page,
+      Integer size, String sortField, String sortOrder) {
+    return submissionDispatcher.getJobTasks(jobId, state, search, page, size, sortField, sortOrder);
+  }
+
+  public Integer getJobTasksCount(String jobId, String state, String search) {
+    return submissionDispatcher.getJobTasksCount(jobId, state, search);
+  }
+
   /**
    * This function get saps image with specific id in Catalog.
    *
