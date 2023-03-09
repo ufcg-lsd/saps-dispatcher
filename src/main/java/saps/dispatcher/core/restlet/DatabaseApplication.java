@@ -160,7 +160,7 @@ public class DatabaseApplication extends Application {
       String preprocessingPhaseTag,
       String processingPhaseTag,
       String priority,
-      String email, 
+      String email,
       String label)
       throws Exception {
     return submissionDispatcher.createJobSubmission(
@@ -174,16 +174,25 @@ public class DatabaseApplication extends Application {
         preprocessingPhaseTag,
         processingPhaseTag,
         Integer.parseInt(priority),
-        email, 
+        email,
         label);
   }
 
-  public List<SapsUserJob> getAllJobs(String state, String search, Integer page, Integer size, String sortField, String sortOrder, boolean withoutTasks) {
-    return submissionDispatcher.getAllJobs(state, search, page, size, sortField, sortOrder, withoutTasks);
+  public List<SapsUserJob> getAllJobs(
+      String state,
+      String search,
+      Integer page,
+      Integer size,
+      String sortField,
+      String sortOrder,
+      boolean withoutTasks,
+      boolean allOngoingJobs) {
+    return submissionDispatcher.getAllJobs(state, search, page, size, sortField, sortOrder, withoutTasks,
+    allOngoingJobs);
   }
 
-  public Integer getJobsCount(String state) {
-    return submissionDispatcher.getJobsCount(state);
+  public Integer getJobsCount(String state, String search, boolean allOngoingJobs) {
+    return submissionDispatcher.getJobsCount(state, search, allOngoingJobs);
   }
 
   /**

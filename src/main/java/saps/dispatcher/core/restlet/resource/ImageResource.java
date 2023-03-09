@@ -31,15 +31,14 @@ public class ImageResource extends BaseResource {
 
   private static final Logger LOGGER = Logger.getLogger(ImageResource.class);
 
-  private static final String QUERY_KEY_TASK_ID = "taskId";
-  private static final String QUERY_KEY_TASK_STATE = "taskState";
+  private static final String QUERY_KEY_JOB_ID = "jobId";
+  private static final String QUERY_KEY_JOB_STATE = "jobState";
   private static final String QUERY_KEY_WITHOUT_TASKS = "withoutTasks";
+  private static final String QUERY_KEY_ONLY_ONGOING_JOBS = "allOngoingJobs";
   private static final String QUERY_KEY_PAGINATION_PAGE = "page";
   private static final String QUERY_KEY_PAGINATION_SIZE = "size";
   private static final String QUERY_KEY_PAGINATION_SORT = "sort";
   private static final String QUERY_KEY_PAGINATION_SEARCH = "search";
-  private static final String QUERY_VALUE_ONGOING_TASKS = "ongoing";
-  private static final String QUERY_VALUE_COMPLETED_TASKS = "completed";
 
   private static final String LOWER_LEFT = "lowerLeft";
   private static final String UPPER_RIGHT = "upperRight";
@@ -61,6 +60,7 @@ public class ImageResource extends BaseResource {
     super();
   }
 
+  //remove this
   private JSONObject getTaskById(String taskId) {
     LOGGER.info("Getting taskID" + taskId);
 
@@ -78,6 +78,7 @@ public class ImageResource extends BaseResource {
     return responseJSON;
   }
 
+  //remove this
   private JSONObject getAllJTasks(String state, String search, Integer page, Integer size, JSONObject sortJSON) {
     LOGGER.info("Getting all tasks");
 
@@ -106,22 +107,24 @@ public class ImageResource extends BaseResource {
 
   @SuppressWarnings("unchecked")
   @Get
-  public Representation getAllJobs() throws Exception {    
+  public Representation getAllJobs() throws Exception {
     Series<Header> series = (Series<Header>) getRequestAttributes().get("org.restlet.http.headers");
     String userEmail = series.getFirstValue(UserResource.REQUEST_ATTR_USER_EMAIL, true);
     String userPass = series.getFirstValue(UserResource.REQUEST_ATTR_USERPASS, true);
     String userEGI = series.getFirstValue(UserResource.REQUEST_ATTR_USER_EGI, true);
-    String state = series.getFirstValue(QUERY_KEY_TASK_STATE, true);
+    String state = series.getFirstValue(QUERY_KEY_JOB_STATE, true);
     String search = series.getFirstValue(QUERY_KEY_PAGINATION_SEARCH, true);
+    String jobId = series.getFirstValue(QUERY_KEY_JOB_ID, true);
     Integer page = Integer.parseInt(series.getFirstValue(QUERY_KEY_PAGINATION_PAGE, true));
     Integer size = Integer.parseInt(series.getFirstValue(QUERY_KEY_PAGINATION_SIZE, true));
     Boolean withoutTasks = Boolean.parseBoolean(series.getFirstValue(QUERY_KEY_WITHOUT_TASKS, true));
+    Boolean allOngoingJobs = Boolean.parseBoolean(series.getFirstValue(QUERY_KEY_ONLY_ONGOING_JOBS, true));
     JSONObject sortJSON = new JSONObject(series.getFirstValue(QUERY_KEY_PAGINATION_SORT, true));
-    
+
     if (!authenticateUser(userEmail, userPass, userEGI)) {
       throw new ResourceException(HttpStatus.SC_UNAUTHORIZED);
     }
-    
+
     String sortField = "";
     String sortOrder = "";
     JSONArray jobsJSON = new JSONArray();
@@ -132,15 +135,21 @@ public class ImageResource extends BaseResource {
       sortOrder = sortJSON.get(sortField).toString();
     }
 
-    Integer jobsCount = application.getJobsCount(state);
-    List<SapsUserJob> jobList = application.getAllJobs(state, search, page, size, sortField, sortOrder, withoutTasks);    
-    for (SapsUserJob userJob : jobList) {
-      jobsJSON.put(userJob.toJSON());
+    if (jobId != null) {
+      // SapsUserJob userJob = application.getJobTasks(jobId, search, page, size, sortField, sortOrder);
+      // jobsJSON.put(userJob.toJSON());
+      // responseJSON.put("tasks", jobsJSON);
+      // responseJSON.put("tasksCount", 1); //edit this
+    } else {
+      Integer jobsCount = application.getJobsCount(state, search, allOngoingJobs);
+      List<SapsUserJob> jobList = application.getAllJobs(state, search, page, size, sortField, sortOrder, withoutTasks, allOngoingJobs);
+      for (SapsUserJob userJob : jobList) {
+        jobsJSON.put(userJob.toJSON());
+      }
+      responseJSON.put("jobs", jobsJSON);
+      responseJSON.put("jobsCount", jobsCount);  
     }
-
-    responseJSON.put("jobs", jobsJSON); 
-    responseJSON.put("jobsCount", jobsCount); 
-
+    
     return new StringRepresentation(responseJSON.toString(), MediaType.APPLICATION_JSON);
   }
 
