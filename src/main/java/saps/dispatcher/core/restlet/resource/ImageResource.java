@@ -32,7 +32,7 @@ public class ImageResource extends BaseResource {
   private static final Logger LOGGER = Logger.getLogger(ImageResource.class);
 
   private static final String QUERY_KEY_JOB_ID = "jobId";
-  private static final String QUERY_KEY_JOB_STATE = "jobState";
+  private static final String QUERY_KEY_STATE_FILTER = "state";
   private static final String QUERY_KEY_WITHOUT_TASKS = "withoutTasks";
   private static final String QUERY_KEY_ONLY_ONGOING_JOBS = "allOngoingJobs";
   private static final String QUERY_KEY_PAGINATION_PAGE = "page";
@@ -112,7 +112,7 @@ public class ImageResource extends BaseResource {
     String userEmail = series.getFirstValue(UserResource.REQUEST_ATTR_USER_EMAIL, true);
     String userPass = series.getFirstValue(UserResource.REQUEST_ATTR_USERPASS, true);
     String userEGI = series.getFirstValue(UserResource.REQUEST_ATTR_USER_EGI, true);
-    String state = series.getFirstValue(QUERY_KEY_JOB_STATE, true);
+    String state = series.getFirstValue(QUERY_KEY_STATE_FILTER, true);
     String search = series.getFirstValue(QUERY_KEY_PAGINATION_SEARCH, true);
     String jobId = series.getFirstValue(QUERY_KEY_JOB_ID, true);
     Integer page = Integer.parseInt(series.getFirstValue(QUERY_KEY_PAGINATION_PAGE, true));
@@ -127,7 +127,7 @@ public class ImageResource extends BaseResource {
 
     String sortField = "";
     String sortOrder = "";
-    JSONArray jobsJSON = new JSONArray();
+    JSONArray listJSON = new JSONArray();
     JSONObject responseJSON = new JSONObject();
 
     if (sortJSON.length() > 0) {
@@ -136,18 +136,20 @@ public class ImageResource extends BaseResource {
     }
 
     if (jobId != null) {
-      SapsImage jobTasks = application.getJobTasks(jobId, search, page, size, sortField, sortOrder);
-      Integer tasksCount = application.getJobTasksCount(state, search, allOngoingJobs);
-      jobsJSON.put(jobTasks.toJSON());
-      responseJSON.put("tasks", jobsJSON);
+      List<SapsImage> jobTasks = application.getJobTasks(jobId, state, search, page, size, sortField, sortOrder);
+      Integer tasksCount = application.getJobTasksCount(jobId, state, search);
+      for (SapsImage task : jobTasks) {
+        listJSON.put(task.toJSON());
+      }
+      responseJSON.put("tasks", listJSON);
       responseJSON.put("tasksCount", tasksCount); //edit this
     } else {
       Integer jobsCount = application.getJobsCount(state, search, allOngoingJobs);
       List<SapsUserJob> jobList = application.getAllJobs(state, search, page, size, sortField, sortOrder, withoutTasks, allOngoingJobs);
       for (SapsUserJob userJob : jobList) {
-        jobsJSON.put(userJob.toJSON());
+        listJSON.put(userJob.toJSON());
       }
-      responseJSON.put("jobs", jobsJSON);
+      responseJSON.put("jobs", listJSON);
       responseJSON.put("jobsCount", jobsCount);  
     }
     
