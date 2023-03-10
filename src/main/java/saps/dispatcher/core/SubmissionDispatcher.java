@@ -225,8 +225,9 @@ public class SubmissionDispatcher {
 
   /**
    * It checks if the {@code SapsImage} is valid.
+   * 
    * @param region is the location of the satellite data following the global
-   * @param date is the date on which the satellite data was collected following
+   * @param date   is the date on which the satellite data was collected following
    * @return true if the {@code SapsImage} is valid, false otherwise.
    */
   private Boolean validateLandsatImage(String region, Date date) {
@@ -430,22 +431,68 @@ public class SubmissionDispatcher {
     return CatalogUtils.getAllTasks(catalog, "get all tasks");
   }
 
+  /**
+   * This function get all saps user job in Catalog.
+   * 
+   * @param state          state of jobs
+   * @param search         search string
+   * @param page           page number
+   * @param size           page size
+   * @param sortField      sort field
+   * @param sortOrder      sort order
+   * @param withoutTasks   without tasks
+   * @param recoverOnlyOngoing if true, only ongoing jobs will be recovered
+   * @return list of jobs
+   */
   public List<SapsUserJob> getAllJobs(String state, String search, Integer page, Integer size, String sortField,
-      String sortOrder, boolean withoutTasks, boolean allOngoingJobs) {
-    return CatalogUtils.getUserJobs(catalog, state, search, page, size, sortField, sortOrder, withoutTasks, allOngoingJobs, "get jobs");
+      String sortOrder, boolean withoutTasks, boolean recoverOnlyOngoing) {
+    return CatalogUtils.getUserJobs(catalog, state, search, page, size, sortField, sortOrder, withoutTasks,
+        recoverOnlyOngoing, "get jobs");
   }
 
-  public Integer getJobsCount(String state, String search, boolean allOngoingJobs) {
-    return CatalogUtils.getUserJobsCount(catalog, state, search, allOngoingJobs, "get amount of jobs");
+  /**
+   * This function get tha amount of all jobs in Catalog.
+   * 
+   * @param state          state of jobs
+   * @param search         search string
+   * @param recoverOnlyOngoing  if true, only ongoing jobs will be recovered
+   * @return amount of all jobs
+   */
+  public Integer getJobsCount(String state, String search, boolean recoverOnlyOngoing) {
+    return CatalogUtils.getUserJobsCount(catalog, state, search, recoverOnlyOngoing, "get amount of jobs");
   }
 
+  /**
+   * This function get the jobs tasks in Catalog based on the job id.
+   *
+   * @param jobId          job id to be searched
+   * @param state          state of jobs
+   * @param search         search string
+   * @param page           page number
+   * @param size           page size
+   * @param sortField      sort field
+   * @param sortOrder      sort order
+   * @param recoverOnlyOngoing if true, only ongoing tasks will be recovered
+   * @return saps user job with specific id
+   * @throws SQLException
+   */
   public List<SapsImage> getJobTasks(String jobId, String state, String search, Integer page,
-      Integer size, String sortField, String sortOrder, boolean allOngoingJobs) {
-    return CatalogUtils.getUserJobTasks(catalog, jobId, state, search, page, size, sortField, sortOrder, allOngoingJobs, "get job tasks");
+      Integer size, String sortField, String sortOrder, boolean recoverOnlyOngoing) {
+    return CatalogUtils.getUserJobTasks(catalog, jobId, state, search, page, size, sortField, sortOrder, recoverOnlyOngoing,
+        "get job tasks");
   }
 
-  public Integer getJobTasksCount(String jobId, String state, String search, boolean allOngoingJobs) {
-    return CatalogUtils.getUserJobTasksCount(catalog, jobId, state, search, allOngoingJobs, "get amount of tasks");
+  /**
+   * This function get tha amount of all jobs tasks in Catalog.
+   * 
+   * @param jobId          job id to be searched
+   * @param state          state of jobs
+   * @param search         search string
+   * @param recoverOnlyOngoing if true, only ongoing tasks will be recovered
+   * @return amount of all jobs tasks
+   */
+  public Integer getJobTasksCount(String jobId, String state, String search, boolean recoverOnlyOngoing) {
+    return CatalogUtils.getUserJobTasksCount(catalog, jobId, state, search, recoverOnlyOngoing, "get amount of tasks");
   }
 
   /**

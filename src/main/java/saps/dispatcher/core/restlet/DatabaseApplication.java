@@ -178,6 +178,19 @@ public class DatabaseApplication extends Application {
         label);
   }
 
+  /**
+   * This function get all saps user job in Catalog.
+   * 
+   * @param state          state of jobs
+   * @param search         search string
+   * @param page           page number
+   * @param size           page size
+   * @param sortField      sort field
+   * @param sortOrder      sort order
+   * @param withoutTasks   without tasks
+   * @param recoverOnlyOngoing if true, only ongoing jobs will be recovered
+   * @return list of jobs
+   */
   public List<SapsUserJob> getAllJobs(
       String state,
       String search,
@@ -186,22 +199,53 @@ public class DatabaseApplication extends Application {
       String sortField,
       String sortOrder,
       boolean withoutTasks,
-      boolean allOngoingJobs) {
+      boolean recoverOnlyOngoing) {
     return submissionDispatcher.getAllJobs(state, search, page, size, sortField, sortOrder, withoutTasks,
-    allOngoingJobs);
+        recoverOnlyOngoing);
   }
 
-  public Integer getJobsCount(String state, String search, boolean allOngoingJobs) {
-    return submissionDispatcher.getJobsCount(state, search, allOngoingJobs);
+  /**
+   * This function get tha amount of all jobs in Catalog.
+   * 
+   * @param state          state of jobs
+   * @param search         search string
+   * @param recoverOnlyOngoing if true, only ongoing jobs will be recovered
+   * @return amount of all jobs
+   */
+  public Integer getJobsCount(String state, String search, boolean recoverOnlyOngoing) {
+    return submissionDispatcher.getJobsCount(state, search, recoverOnlyOngoing);
   }
 
+  /**
+   * This function get the jobs tasks in Catalog based on the job id.
+   *
+   * @param jobId job id to be searched
+   * @param state state of jobs
+   * @param search search string
+   * @param page page number
+   * @param size page size
+   * @param sortField sort field
+   * @param sortOrder sort order
+   * @param recoverOnlyOngoing if true, only ongoing tasks will be recovered
+   * @return saps user job with specific id
+   * @throws SQLException
+   */
   public List<SapsImage> getJobTasks(String jobId, String state, String search, Integer page,
-      Integer size, String sortField, String sortOrder, boolean allOngoingJobs) {
-    return submissionDispatcher.getJobTasks(jobId, state, search, page, size, sortField, sortOrder, allOngoingJobs);
+      Integer size, String sortField, String sortOrder, boolean recoverOnlyOngoing) {
+    return submissionDispatcher.getJobTasks(jobId, state, search, page, size, sortField, sortOrder, recoverOnlyOngoing);
   }
 
-  public Integer getJobTasksCount(String jobId, String state, String search, boolean allOngoingJobs) {
-    return submissionDispatcher.getJobTasksCount(jobId, state, search, allOngoingJobs);
+  /**
+   * This function get tha amount of all jobs tasks in Catalog.
+   * 
+   * @param jobId          job id to be searched
+   * @param state          state of jobs
+   * @param search         search string
+   * @param recoverOnlyOngoing if true, only ongoing tasks will be recovered
+   * @return amount of all jobs tasks
+   */
+  public Integer getJobTasksCount(String jobId, String state, String search, boolean recoverOnlyOngoing) {
+    return submissionDispatcher.getJobTasksCount(jobId, state, search, recoverOnlyOngoing);
   }
 
   /**
