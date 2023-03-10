@@ -1,6 +1,7 @@
 /* (C)2020 */
 package saps.dispatcher.core.restlet.resource;
 
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 
@@ -23,6 +24,8 @@ import com.google.gson.Gson;
 
 import saps.common.core.model.SapsImage;
 import saps.common.core.model.SapsUserJob;
+import saps.common.core.model.enums.ImageTaskState;
+import saps.common.core.model.enums.JobState;
 
 public class ImageResource extends BaseResource {
 
@@ -67,11 +70,11 @@ public class ImageResource extends BaseResource {
     String state = series.getFirstValue(QUERY_KEY_STATE_FILTER, true);
     String search = series.getFirstValue(QUERY_KEY_PAGINATION_SEARCH, true);
     String jobId = series.getFirstValue(QUERY_KEY_JOB_ID, true);
-    Integer page = Integer.parseInt(series.getFirstValue(QUERY_KEY_PAGINATION_PAGE, true));
-    Integer size = Integer.parseInt(series.getFirstValue(QUERY_KEY_PAGINATION_SIZE, true));
+    String page = series.getFirstValue(QUERY_KEY_PAGINATION_PAGE, true);
+    String size = series.getFirstValue(QUERY_KEY_PAGINATION_SIZE, true);
+    String sortOptions = series.getFirstValue(QUERY_KEY_PAGINATION_SORT, true);
     Boolean withoutTasks = Boolean.parseBoolean(series.getFirstValue(QUERY_KEY_WITHOUT_TASKS, true));
     Boolean recoverOnlyOngoing = Boolean.parseBoolean(series.getFirstValue(QUERY_KEY_RECOVER_ONLY_ONGOING, true));
-    JSONObject sortJSON = new JSONObject(series.getFirstValue(QUERY_KEY_PAGINATION_SORT, true));
 
     if (!authenticateUser(userEmail, userPass, userEGI)) {
       throw new ResourceException(HttpStatus.SC_UNAUTHORIZED);
@@ -81,24 +84,28 @@ public class ImageResource extends BaseResource {
     String sortOrder = "";
     JSONArray listJSON = new JSONArray();
     JSONObject responseJSON = new JSONObject();
+    Integer pageInt = page != null ? Integer.parseInt(page) : 0;
+    Integer sizeInt = size != null ? Integer.parseInt(size) : 0;
 
-    if (sortJSON.length() > 0) {
-      sortField = sortJSON.keys().next().toString();
-      sortOrder = sortJSON.get(sortField).toString();
+    if ( sortOptions != null ) {
+      sortField = new JSONObject(sortOptions).keys().next().toString();
+      sortOrder = new JSONObject(sortOptions).get(sortField).toString();
     }
 
     if (jobId != null) {
-      List<SapsImage> jobTasks = application.getJobTasks(jobId, state, search, page, size, sortField, sortOrder,
+      ImageTaskState imageTaskState = state != null ? ImageTaskState.valueOf(state) : null;
+      List<SapsImage> jobTasks = application.getJobTasks(jobId, imageTaskState, search, pageInt, sizeInt, sortField, sortOrder,
           recoverOnlyOngoing);
-      Integer tasksCount = application.getJobTasksCount(jobId, state, search, recoverOnlyOngoing);
+      Integer tasksCount = application.getJobTasksCount(jobId, imageTaskState, search, recoverOnlyOngoing);
       for (SapsImage task : jobTasks) {
         listJSON.put(task.toJSON());
       }
       responseJSON.put("tasks", listJSON);
       responseJSON.put("tasksCount", tasksCount);
     } else {
-      Integer jobsCount = application.getJobsCount(state, search, recoverOnlyOngoing);
-      List<SapsUserJob> jobList = application.getAllJobs(state, search, page, size, sortField, sortOrder, withoutTasks,
+      JobState jobState = state != null ? JobState.getStateFromStr(state) : null;
+      Integer jobsCount = application.getJobsCount(jobState, search, recoverOnlyOngoing);
+      List<SapsUserJob> jobList = application.getAllJobs(jobState, search, pageInt, sizeInt, sortField, sortOrder, withoutTasks,
           recoverOnlyOngoing);
       for (SapsUserJob userJob : jobList) {
         listJSON.put(userJob.toJSON());
@@ -164,6 +171,11 @@ public class ImageResource extends BaseResource {
     String email = form.getFirstValue(EMAIL);
     String label = form.getFirstValue(LABEL);
 
+    if (label == null || label.isEmpty()) {
+      SimpleDateFormat getYearFormat = new SimpleDateFormat("yyyy");
+      label = userEmail.split("@")[0] + "_" + getYearFormat.format(initDate) + "_" + getYearFormat.format(endDate);
+    }
+
     String builder = "Creating new image process with configuration:\n"
         + "\tLower Left: "
         + lowerLeftLatitude
@@ -216,7 +228,7 @@ public class ImageResource extends BaseResource {
       return new StringRepresentation(gson.toJson(taskIds), MediaType.APPLICATION_JSON);
 
     } catch (Exception e) {
-      LOGGER.error("Error while add news tasks.", e);
+      LOGGER.error("Error while add new job.", e);
       return new StringRepresentation(ADD_JOB_MESSAGE_FAILURE, MediaType.TEXT_PLAIN);
     }
   }

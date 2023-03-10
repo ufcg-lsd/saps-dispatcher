@@ -21,6 +21,7 @@ import saps.common.core.model.SapsImage;
 import saps.common.core.model.SapsUser;
 import saps.common.core.model.SapsUserJob;
 import saps.common.core.model.enums.ImageTaskState;
+import saps.common.core.model.enums.JobState;
 import saps.common.exceptions.SapsException;
 import saps.common.utils.SapsPropertiesConstants;
 import saps.common.utils.SapsPropertiesUtil;
@@ -192,7 +193,7 @@ public class DatabaseApplication extends Application {
    * @return list of jobs
    */
   public List<SapsUserJob> getAllJobs(
-      String state,
+      JobState state,
       String search,
       Integer page,
       Integer size,
@@ -212,7 +213,7 @@ public class DatabaseApplication extends Application {
    * @param recoverOnlyOngoing if true, only ongoing jobs will be recovered
    * @return amount of all jobs
    */
-  public Integer getJobsCount(String state, String search, boolean recoverOnlyOngoing) {
+  public Integer getJobsCount(JobState state, String search, boolean recoverOnlyOngoing) {
     return submissionDispatcher.getJobsCount(state, search, recoverOnlyOngoing);
   }
 
@@ -230,7 +231,7 @@ public class DatabaseApplication extends Application {
    * @return saps user job with specific id
    * @throws SQLException
    */
-  public List<SapsImage> getJobTasks(String jobId, String state, String search, Integer page,
+  public List<SapsImage> getJobTasks(String jobId, ImageTaskState state, String search, Integer page,
       Integer size, String sortField, String sortOrder, boolean recoverOnlyOngoing) {
     return submissionDispatcher.getJobTasks(jobId, state, search, page, size, sortField, sortOrder, recoverOnlyOngoing);
   }
@@ -244,7 +245,7 @@ public class DatabaseApplication extends Application {
    * @param recoverOnlyOngoing if true, only ongoing tasks will be recovered
    * @return amount of all jobs tasks
    */
-  public Integer getJobTasksCount(String jobId, String state, String search, boolean recoverOnlyOngoing) {
+  public Integer getJobTasksCount(String jobId, ImageTaskState state, String search, boolean recoverOnlyOngoing) {
     return submissionDispatcher.getJobTasksCount(jobId, state, search, recoverOnlyOngoing);
   }
 
