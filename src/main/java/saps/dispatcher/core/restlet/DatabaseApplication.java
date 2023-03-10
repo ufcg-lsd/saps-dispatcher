@@ -196,12 +196,12 @@ public class DatabaseApplication extends Application {
   }
 
   public List<SapsImage> getJobTasks(String jobId, String state, String search, Integer page,
-      Integer size, String sortField, String sortOrder) {
-    return submissionDispatcher.getJobTasks(jobId, state, search, page, size, sortField, sortOrder);
+      Integer size, String sortField, String sortOrder, boolean allOngoingJobs) {
+    return submissionDispatcher.getJobTasks(jobId, state, search, page, size, sortField, sortOrder, allOngoingJobs);
   }
 
-  public Integer getJobTasksCount(String jobId, String state, String search) {
-    return submissionDispatcher.getJobTasksCount(jobId, state, search);
+  public Integer getJobTasksCount(String jobId, String state, String search, boolean allOngoingJobs) {
+    return submissionDispatcher.getJobTasksCount(jobId, state, search, allOngoingJobs);
   }
 
   /**

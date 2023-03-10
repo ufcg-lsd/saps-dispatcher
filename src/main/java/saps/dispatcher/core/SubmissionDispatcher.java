@@ -440,12 +440,12 @@ public class SubmissionDispatcher {
   }
 
   public List<SapsImage> getJobTasks(String jobId, String state, String search, Integer page,
-      Integer size, String sortField, String sortOrder) {
-    return CatalogUtils.getUserJobTasks(catalog, jobId, state, search, page, size, sortField, sortOrder, "get job tasks");
+      Integer size, String sortField, String sortOrder, boolean allOngoingJobs) {
+    return CatalogUtils.getUserJobTasks(catalog, jobId, state, search, page, size, sortField, sortOrder, allOngoingJobs, "get job tasks");
   }
 
-  public Integer getJobTasksCount(String jobId, String state, String search) {
-    return CatalogUtils.getUserJobTasksCount(catalog, jobId, state, search, "get amount of tasks");
+  public Integer getJobTasksCount(String jobId, String state, String search, boolean allOngoingJobs) {
+    return CatalogUtils.getUserJobTasksCount(catalog, jobId, state, search, allOngoingJobs, "get amount of tasks");
   }
 
   /**

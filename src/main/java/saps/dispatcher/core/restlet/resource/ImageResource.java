@@ -107,7 +107,7 @@ public class ImageResource extends BaseResource {
 
   @SuppressWarnings("unchecked")
   @Get
-  public Representation getAllJobs() throws Exception {
+  public Representation getJobs() throws Exception {
     Series<Header> series = (Series<Header>) getRequestAttributes().get("org.restlet.http.headers");
     String userEmail = series.getFirstValue(UserResource.REQUEST_ATTR_USER_EMAIL, true);
     String userPass = series.getFirstValue(UserResource.REQUEST_ATTR_USERPASS, true);
@@ -136,13 +136,13 @@ public class ImageResource extends BaseResource {
     }
 
     if (jobId != null) {
-      List<SapsImage> jobTasks = application.getJobTasks(jobId, state, search, page, size, sortField, sortOrder);
-      Integer tasksCount = application.getJobTasksCount(jobId, state, search);
+      List<SapsImage> jobTasks = application.getJobTasks(jobId, state, search, page, size, sortField, sortOrder, allOngoingJobs);
+      Integer tasksCount = application.getJobTasksCount(jobId, state, search, allOngoingJobs);
       for (SapsImage task : jobTasks) {
         listJSON.put(task.toJSON());
       }
       responseJSON.put("tasks", listJSON);
-      responseJSON.put("tasksCount", tasksCount); //edit this
+      responseJSON.put("tasksCount", tasksCount);
     } else {
       Integer jobsCount = application.getJobsCount(state, search, allOngoingJobs);
       List<SapsUserJob> jobList = application.getAllJobs(state, search, page, size, sortField, sortOrder, withoutTasks, allOngoingJobs);
