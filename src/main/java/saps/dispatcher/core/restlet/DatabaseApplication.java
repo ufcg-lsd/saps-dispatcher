@@ -189,7 +189,8 @@ public class DatabaseApplication extends Application {
    * @param sortField      sort field
    * @param sortOrder      sort order
    * @param withoutTasks   without tasks
-   * @param recoverOnlyOngoing if true, only ongoing jobs will be recovered
+   * @param recoverOngoing if true, only ongoing jobs will be recovered
+   * @param recoverCompleted if true, only completed tasks will be recovered
    * @return list of jobs
    */
   public List<SapsUserJob> getAllJobs(
@@ -200,9 +201,10 @@ public class DatabaseApplication extends Application {
       String sortField,
       String sortOrder,
       boolean withoutTasks,
-      boolean recoverOnlyOngoing) {
+      boolean recoverOngoing,
+      boolean recoverCompleted) {
     return submissionDispatcher.getAllJobs(state, search, page, size, sortField, sortOrder, withoutTasks,
-        recoverOnlyOngoing);
+        recoverOngoing, recoverCompleted);
   }
 
   /**
@@ -210,11 +212,12 @@ public class DatabaseApplication extends Application {
    * 
    * @param state          state of jobs
    * @param search         search string
-   * @param recoverOnlyOngoing if true, only ongoing jobs will be recovered
+   * @param recoverOngoing if true, only ongoing jobs will be recovered
+   * @param recoverCompleted if true, only completed tasks will be recovered
    * @return amount of all jobs
    */
-  public Integer getJobsCount(JobState state, String search, boolean recoverOnlyOngoing) {
-    return submissionDispatcher.getJobsCount(state, search, recoverOnlyOngoing);
+  public Integer getJobsCount(JobState state, String search, boolean recoverOngoing, boolean recoverCompleted) {
+    return submissionDispatcher.getJobsCount(state, search, recoverOngoing, recoverCompleted);
   }
 
   /**
@@ -227,13 +230,14 @@ public class DatabaseApplication extends Application {
    * @param size page size
    * @param sortField sort field
    * @param sortOrder sort order
-   * @param recoverOnlyOngoing if true, only ongoing tasks will be recovered
+   * @param recoverOngoing if true, only ongoing tasks will be recovered
+   * @param recoverCompleted if true, only completed tasks will be recovered
    * @return saps user job with specific id
    * @throws SQLException
    */
   public List<SapsImage> getJobTasks(String jobId, ImageTaskState state, String search, Integer page,
-      Integer size, String sortField, String sortOrder, boolean recoverOnlyOngoing) {
-    return submissionDispatcher.getJobTasks(jobId, state, search, page, size, sortField, sortOrder, recoverOnlyOngoing);
+      Integer size, String sortField, String sortOrder, boolean recoverOngoing, boolean recoverCompleted) {
+    return submissionDispatcher.getJobTasks(jobId, state, search, page, size, sortField, sortOrder, recoverOngoing, recoverCompleted);
   }
 
   /**
@@ -242,11 +246,12 @@ public class DatabaseApplication extends Application {
    * @param jobId          job id to be searched
    * @param state          state of jobs
    * @param search         search string
-   * @param recoverOnlyOngoing if true, only ongoing tasks will be recovered
+   * @param recoverOngoing if true, only ongoing tasks will be recovered
+   * @param recoverCompleted if true, only completed tasks will be recovered
    * @return amount of all jobs tasks
    */
-  public Integer getJobTasksCount(String jobId, ImageTaskState state, String search, boolean recoverOnlyOngoing) {
-    return submissionDispatcher.getJobTasksCount(jobId, state, search, recoverOnlyOngoing);
+  public Integer getJobTasksCount(String jobId, ImageTaskState state, String search, boolean recoverOngoing, boolean recoverCompleted) {
+    return submissionDispatcher.getJobTasksCount(jobId, state, search, recoverOngoing, recoverCompleted);
   }
 
   /**

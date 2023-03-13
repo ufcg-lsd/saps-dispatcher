@@ -34,7 +34,8 @@ public class ImageResource extends BaseResource {
   private static final String QUERY_KEY_JOB_ID = "jobId";
   private static final String QUERY_KEY_STATE_FILTER = "state";
   private static final String QUERY_KEY_WITHOUT_TASKS = "withoutTasks";
-  private static final String QUERY_KEY_RECOVER_ONLY_ONGOING = "recoverOnlyOngoing";
+  private static final String QUERY_KEY_RECOVER_ONGOING = "recoverOngoing";
+  private static final String QUERY_KEY_RECOVER_COMPLETED = "recoverCompleted";
   private static final String QUERY_KEY_PAGINATION_PAGE = "page";
   private static final String QUERY_KEY_PAGINATION_SIZE = "size";
   private static final String QUERY_KEY_PAGINATION_SORT = "sort";
@@ -74,7 +75,8 @@ public class ImageResource extends BaseResource {
     String size = series.getFirstValue(QUERY_KEY_PAGINATION_SIZE, true);
     String sortOptions = series.getFirstValue(QUERY_KEY_PAGINATION_SORT, true);
     Boolean withoutTasks = Boolean.parseBoolean(series.getFirstValue(QUERY_KEY_WITHOUT_TASKS, true));
-    Boolean recoverOnlyOngoing = Boolean.parseBoolean(series.getFirstValue(QUERY_KEY_RECOVER_ONLY_ONGOING, true));
+    Boolean recoverOngoing = Boolean.parseBoolean(series.getFirstValue(QUERY_KEY_RECOVER_ONGOING, true));
+    Boolean recoverCompleted = Boolean.parseBoolean(series.getFirstValue(QUERY_KEY_RECOVER_COMPLETED, true));
 
     if (!authenticateUser(userEmail, userPass, userEGI)) {
       throw new ResourceException(HttpStatus.SC_UNAUTHORIZED);
@@ -95,8 +97,8 @@ public class ImageResource extends BaseResource {
     if (jobId != null) {
       ImageTaskState imageTaskState = state != null ? ImageTaskState.valueOf(state) : null;
       List<SapsImage> jobTasks = application.getJobTasks(jobId, imageTaskState, search, pageInt, sizeInt, sortField, sortOrder,
-          recoverOnlyOngoing);
-      Integer tasksCount = application.getJobTasksCount(jobId, imageTaskState, search, recoverOnlyOngoing);
+          recoverOngoing, recoverCompleted);
+      Integer tasksCount = application.getJobTasksCount(jobId, imageTaskState, search, recoverOngoing, recoverCompleted);
       for (SapsImage task : jobTasks) {
         listJSON.put(task.toJSON());
       }
@@ -104,9 +106,9 @@ public class ImageResource extends BaseResource {
       responseJSON.put("tasksCount", tasksCount);
     } else {
       JobState jobState = state != null ? JobState.getStateFromStr(state) : null;
-      Integer jobsCount = application.getJobsCount(jobState, search, recoverOnlyOngoing);
+      Integer jobsCount = application.getJobsCount(jobState, search, recoverOngoing, recoverCompleted);
       List<SapsUserJob> jobList = application.getAllJobs(jobState, search, pageInt, sizeInt, sortField, sortOrder, withoutTasks,
-          recoverOnlyOngoing);
+          recoverOngoing, recoverCompleted);
       for (SapsUserJob userJob : jobList) {
         listJSON.put(userJob.toJSON());
       }
