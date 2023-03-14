@@ -96,14 +96,20 @@ public class ImageResource extends BaseResource {
 
     if (jobId != null) {
       ImageTaskState imageTaskState = state != null ? ImageTaskState.valueOf(state) : null;
+      Integer tasksAmount = application.getJobTasksCount(jobId, null, null, false, false);
+      Integer tasksOngoing = application.getJobTasksCount(jobId, null, null, true, false);
+      Integer tasksFailed = application.getJobTasksCount(jobId, ImageTaskState.FAILED, null, false, false);
+      Integer tasksArchived = application.getJobTasksCount(jobId, ImageTaskState.ARCHIVED, null, false, false);
       List<SapsImage> jobTasks = application.getJobTasks(jobId, imageTaskState, search, pageInt, sizeInt, sortField, sortOrder,
           recoverOngoing, recoverCompleted);
-      Integer tasksCount = application.getJobTasksCount(jobId, imageTaskState, search, recoverOngoing, recoverCompleted);
       for (SapsImage task : jobTasks) {
         listJSON.put(task.toJSON());
       }
       responseJSON.put("tasks", listJSON);
-      responseJSON.put("tasksCount", tasksCount);
+      responseJSON.put("tasksAmount", tasksAmount);
+      responseJSON.put("tasksOngoing", tasksOngoing);
+      responseJSON.put("tasksFailed", tasksFailed);
+      responseJSON.put("tasksArchived", tasksArchived);
     } else {
       JobState jobState = state != null ? JobState.getStateFromStr(state) : null;
       Integer jobsCount = application.getJobsCount(jobState, search, recoverOngoing, recoverCompleted);
