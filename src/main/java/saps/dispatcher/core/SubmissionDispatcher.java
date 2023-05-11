@@ -225,6 +225,16 @@ public class SubmissionDispatcher {
         "add new job [" + jobLabel + "]");
   }
 
+  private void insertJobTask(
+      String taskId,
+      String jobId) {
+    CatalogUtils.insertJobTask(
+        catalog,
+        taskId,
+        jobId,
+        "insert task [" + taskId + "]" + " into job [" + jobId + "]");
+  }
+
   /**
    * It checks if the {@code SapsImage} is valid.
    * 
@@ -323,7 +333,60 @@ public class SubmissionDispatcher {
       String userEmail,
       String label)
       throws Exception {
+    
+    List<String> taskIds = new ArrayList<String>();
+    String jobId = UUID.randomUUID().toString();
+    addUserJob(
+        jobId,
+        lowerLeftLatitude,
+        lowerLeftLongitude,
+        upperRightLatitude,
+        upperRightLongitude,
+        initDate,
+        endDate,
+        priority,
+        label,
+        taskIds,
+        userEmail
+        );
 
+    LOGGER.info("Job [" + jobId + "] was created");
+    //we should use thread here 
+    taskIds = createJobTasks(
+        jobId,
+        lowerLeftLatitude,
+        lowerLeftLongitude,
+        upperRightLatitude,
+        upperRightLongitude,
+        initDate,
+        endDate,
+        inputdownloadingPhaseTag,
+        preprocessingPhaseTag,
+        processingPhaseTag,
+        priority,
+        userEmail,
+        label);
+    
+    LOGGER.debug("created tasks");
+    return taskIds;
+  }
+
+  private List<String> createJobTasks(
+      String jobId,
+      String lowerLeftLatitude,
+      String lowerLeftLongitude,
+      String upperRightLatitude,
+      String upperRightLongitude,
+      Date initDate,
+      Date endDate,
+      String inputdownloadingPhaseTag,
+      String preprocessingPhaseTag,
+      String processingPhaseTag,
+      int priority,
+      String userEmail,
+      String label)
+      throws Exception {
+        
     GregorianCalendar cal = new GregorianCalendar();
     cal.setTime(initDate);
     GregorianCalendar endCal = new GregorianCalendar();
@@ -351,77 +414,45 @@ public class SubmissionDispatcher {
     String taskIdBase = inputdownloadingPhaseTag.substring(0, 3) + "_" + preprocessingPhaseTag + "_"
         + processingPhaseTag.replace("-", "") + "_";
         
-    Thread producer = new Thread(() -> {
-      while (cal.before(endCal)) {
-        for (String region : regions) {
-          Boolean isValidImage = validateLandsatImage(region, cal.getTime());
-          if (isValidImage) {
-            int startingYear = cal.get(Calendar.YEAR);
-            List<String> datasets = DatasetUtil.getSatsInOperationByYear(startingYear);
-            for (String dataset : datasets) {
-              String date = new SimpleDateFormat("yyyyMMdd").format(cal.getTime());
-              String taskId = taskIdBase + dataset + "_" + date + "_" + region;
-              tasksDataSync.add(new Object[] { taskId, cal.getTime(), dataset, region });
-              tasksIds.add(taskId);
-            }
-          };
-          cal.add(Calendar.DAY_OF_YEAR, 1);
-        }
+    while (cal.before(endCal)) {
+      for (String region : regions) {
+        Boolean isValidImage = validateLandsatImage(region, cal.getTime());
+        if (isValidImage) {
+          int startingYear = cal.get(Calendar.YEAR);
+          List<String> datasets = DatasetUtil.getSatsInOperationByYear(startingYear);
+          for (String dataset : datasets) {
+            String date = new SimpleDateFormat("yyyyMMdd").format(cal.getTime());
+            String taskId = taskIdBase + dataset + "_" + date + "_" + region;
+            tasksDataSync.add(new Object[] { taskId, cal.getTime(), dataset, region });
+            LOGGER.debug("inserting task [" + taskId + "] into [" + jobId  + "]");
+            insertJobTask(taskId, jobId);
+            LOGGER.debug("task inserted");
+            tasksIds.add(taskId);
+          }
+        };
+        cal.add(Calendar.DAY_OF_YEAR, 1);
       }
-    });
-    producer.start();
-
-    Thread[] consumers = new Thread[32];
-    for (int i = 0; i < consumers.length; i++) {
-      consumers[i] = new Thread(() -> {
-        while (producer.isAlive() || !tasksDataSync.isEmpty()) {
-          synchronized (tasksDataSync) {
-            if (!tasksDataSync.isEmpty()) {
-              addTask(
-                  tasksDataSync,
-                  priority,
-                  userEmail,
-                  inputdownloadingPhaseTag,
-                  digestInputdownloading,
-                  preprocessingPhaseTag,
-                  digestPreprocessing,
-                  processingPhaseTag,
-                  digestProcessing);
-            }
+    }
+   
+    while (!tasksDataSync.isEmpty()) {
+        synchronized (tasksDataSync) {
+        if (!tasksDataSync.isEmpty()) {
+          addTask(
+              tasksDataSync,
+              priority,
+              userEmail,
+              inputdownloadingPhaseTag,
+              digestInputdownloading,
+              preprocessingPhaseTag,
+              digestPreprocessing,
+              processingPhaseTag,
+              digestProcessing);
           }
         }
-      });
-      consumers[i].start();
-    }
-
-    String jobId = UUID.randomUUID().toString();
-    producer.join();
-    addUserJob(jobId,
-        lowerLeftLatitude,
-        lowerLeftLongitude,
-        upperRightLatitude,
-        upperRightLongitude,
-        initDate,
-        endDate,
-        priority,
-        label,
-        tasksIds,
-        userEmail);
-
-    Thread jobStateUpdater = new Thread(() -> {
-      try {
-        for (Thread consumer : consumers) {
-          consumer.join();
-        }
-      } catch (InterruptedException e) {
-        LOGGER.error("Error while waiting for consumer thread to finish", e);
       }
-      LOGGER.info("All tasks were created");
-      CatalogUtils.updateUserJob(catalog, jobId, JobState.CREATED, "update job state to CREATED");
-    });
-    jobStateUpdater.start();
 
-    LOGGER.info("Job [" + jobId + "] was created");
+    LOGGER.info("All tasks were created");
+    CatalogUtils.updateUserJob(catalog, jobId, JobState.CREATED, "update job state to CREATED");
     return tasksIds;
   }
 
@@ -606,3 +637,5 @@ public class SubmissionDispatcher {
     return filteredTasks;
   }
 }
+
+
