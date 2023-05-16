@@ -411,8 +411,6 @@ public class SubmissionDispatcher {
     List<String> tasksIds = new ArrayList<String>();
     List<Object[]> tasksData = new ArrayList<Object[]>();
     List<Object[]> tasksDataSync = Collections.synchronizedList(tasksData);
-    String taskIdBase = inputdownloadingPhaseTag.substring(0, 3) + "_" + preprocessingPhaseTag + "_"
-        + processingPhaseTag.replace("-", "") + "_";
         
     while (cal.before(endCal)) {
       for (String region : regions) {
@@ -421,8 +419,7 @@ public class SubmissionDispatcher {
           int startingYear = cal.get(Calendar.YEAR);
           List<String> datasets = DatasetUtil.getSatsInOperationByYear(startingYear);
           for (String dataset : datasets) {
-            String date = new SimpleDateFormat("yyyyMMdd").format(cal.getTime());
-            String taskId = taskIdBase + dataset + "_" + date + "_" + region;
+            String taskId = UUID.randomUUID().toString();
             tasksDataSync.add(new Object[] { taskId, cal.getTime(), dataset, region });
             LOGGER.debug("inserting task [" + taskId + "] into [" + jobId  + "]");
             insertJobTask(taskId, jobId);
