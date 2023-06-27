@@ -1,4 +1,4 @@
-package saps.dispatcher.test;
+package saps.dispatcher.core;
 
 import java.sql.Date;
 import java.sql.SQLException;
@@ -9,7 +9,9 @@ import saps.dispatcher.interfaces.CatalogUtils;
 import saps.dispatcher.interfaces.Dispatcher;
 import saps.dispatcher.interfaces.ImageTaskState;
 import saps.dispatcher.interfaces.SapsImage;
+import saps.dispatcher.interfaces.SapsPropertiesConstants;
 import saps.dispatcher.interfaces.SapsUser;
+import saps.dispatcher.interfaces.SapsUserJob;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
@@ -25,6 +27,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Properties;
 
+import javax.print.attribute.standard.JobState;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -34,9 +38,18 @@ import org.junit.runner.RunWith;
 @PrepareForTest({CatalogUtils.class})
 public class SubmissionDispatcherTest implements Dispatcher {
 
+    Dispatcher submissionDispatcher;
+    Properties properties;
+
 	
 	@Mock		
 	Catalog catalog = mock(Catalog.class);
+
+    @Mock
+    SapsUser user = mock(SapsUser.class);
+
+    @Mock 
+    SapsPropertiesConstants sapsPropertiesConstants = mock(SapsPropertiesConstants.class);
 	
 	@Mock
 	SapsImage sapsImage1 = mock(SapsImage.class);
@@ -44,11 +57,27 @@ public class SubmissionDispatcherTest implements Dispatcher {
 	@Mock
 	SapsImage sapsImage2 = mock(SapsImage.class);
 
+    @Before
+    public void setup() {
+        MockitoAnnotations.openMocks(this);
+        properties = new Properties();
+    }
+
+    @Test
+    public List<String> createJobSubmission(String lowerLeftLatitude, String lowerLeftLongitude,
+            String upperRightLatitude, String upperRightLongitude, Date initDate, Date endDate,
+            String inputdownloadingPhaseTag, String preprocessingPhaseTag, String processingPhaseTag, int priority,
+            String userEmail, String label) throws Exception {
+
+         return null;
+    }
+
     @Override
-    public List<SapsImage> getTasks(String search, Integer page, Integer size, String sortField, String sortOrder,
-            ImageTaskState state) throws SQLException {
+    public List<String> createJobsTasks(String lowerLeftLatitude, String lowerLeftLongitude, String upperRightLatitude,
+            String upperRightLongitude, Date initDate, Date endDate, String inputdownloadingPhaseTag,
+            String preprocessingPhaseTag, String processingPhaseTag, int priority, String userEmail) throws Exception {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getTasks'");
+        throw new UnsupportedOperationException("Unimplemented method 'createJobsTasks'");
     }
 
     @Override
@@ -61,14 +90,6 @@ public class SubmissionDispatcherTest implements Dispatcher {
     public Integer getCountTasks(String search, ImageTaskState state) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getCountTasks'");
-    }
-
-    @Override
-    public List<String> addTasks(String lowerLeftLatitude, String lowerLeftLongitude, String upperRightLatitude,
-            String upperRightLongitude, Date initDate, Date endDate, String inputdownloadingPhaseTag,
-            String preprocessingPhaseTag, String processingPhaseTag, int priority, String userEmail) throws Exception {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'addTasks'");
     }
 
     @Override
@@ -92,13 +113,23 @@ public class SubmissionDispatcherTest implements Dispatcher {
     }
 
     @Override
-    public List<String> createJobSubmission(String lowerLeftLatitude, String lowerLeftLongitude,
-            String upperRightLatitude, String upperRightLongitude, Date initDate, Date endDate,
-            String inputdownloadingPhaseTag, String preprocessingPhaseTag, String processingPhaseTag, int priority,
-            String userEmail, String label) throws Exception {
+    public List<SapsUserJob> getAllJobs(JobState state, String search, Integer page, Integer size, String sortField,
+            String sortOrder, boolean withoutTasks, boolean recoverOngoing, boolean recoverCompleted) {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'createJobSubmission'");
+        throw new UnsupportedOperationException("Unimplemented method 'getAllJobs'");
     }
 
+    @Override
+    public Integer getJobsCount(JobState state, String search, boolean recoverOngoing, boolean recoverCompleted) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getJobsCount'");
+    }
+
+    @Override
+    public List<SapsImage> getJobTasks(String jobId, ImageTaskState state, String search, Integer page, Integer size,
+            String sortField, String sortOrder, boolean recoverOngoing, boolean recoverCompleted) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getJobTasks'");
+    }
 
 }

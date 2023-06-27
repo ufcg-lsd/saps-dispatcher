@@ -4,6 +4,8 @@ import java.sql.Date;
 import java.sql.SQLException;
 import java.util.List;
 
+import javax.print.attribute.standard.JobState;
+
 public interface Dispatcher {
 
   List<String> createJobSubmission(
@@ -21,14 +23,19 @@ public interface Dispatcher {
       String label)
       throws Exception;
 
-  List<SapsImage> getTasks(String search, Integer page, Integer size,
-    String sortField, String sortOrder, ImageTaskState state) throws SQLException;
+  List<SapsUserJob> getAllJobs(JobState state, String search, Integer page, Integer size, String sortField,
+      String sortOrder, boolean withoutTasks, boolean recoverOngoing, boolean recoverCompleted);
 
+  Integer getJobsCount(JobState state, String search, boolean recoverOngoing, boolean recoverCompleted);
+
+  List<SapsImage> getJobTasks(String jobId, ImageTaskState state, String search, Integer page,
+      Integer size, String sortField, String sortOrder, boolean recoverOngoing, boolean recoverCompleted);
+      
   SapsImage getTask(String taskId);
     
   Integer getCountTasks(String search, ImageTaskState state);
 
-  List<String> addTasks(
+  List<String> createJobsTasks(
       String lowerLeftLatitude,
       String lowerLeftLongitude,
       String upperRightLatitude,

@@ -452,6 +452,10 @@ public class SubmissionDispatcher {
     return CatalogUtils.getUserJobsCount(catalog, state, search, recoverOngoing, recoverCompleted, "get amount of jobs");
   }
 
+  public Integer getJobTasksCount(String jobId, ImageTaskState state, String search, boolean recoverOngoing, boolean recoverCompleted) {
+    return CatalogUtils.getUserJobTasksCount(catalog, jobId, state, search, recoverOngoing, recoverCompleted, "get amount of tasks");
+  }
+
 
   /**
    * It gets processed {@code SapsImage} in {@code Catalog} by filtering for

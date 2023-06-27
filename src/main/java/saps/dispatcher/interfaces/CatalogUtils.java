@@ -5,8 +5,6 @@ import java.util.List;
 
 import javax.print.attribute.standard.JobState;
 
-import saps.dispatcher.interfaces.SapsUserJob;
-
 public interface CatalogUtils {
 
     static List<SapsImage> getTasksOngoingWithPagination(Catalog catalog, String search, Integer page, Integer size,

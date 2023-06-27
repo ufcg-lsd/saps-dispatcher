@@ -5,7 +5,7 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import org.apache.log4j.Logger;
 
-import saps.dispatcher.interfaces.*;
+import saps.dispatcher.interfaces.ExecutionScriptTag;
 
 public class DigestUtil {
 
@@ -14,13 +14,13 @@ public class DigestUtil {
   /**
    * This function gets immutable identifier based in repository and tag
    *
-   * @param imageDockerInfo image docker information
+   * @param imageDockerInputdownloading image docker information
    * @return immutable identifier that match with repository and tag passed
    */
-  public static String getDigest(ExecutionScriptTag imageDockerInfo) throws Exception {
+  public static String getDigest(ExecutionScriptTag imageDockerInputdownloading) throws Exception {
 
-    String dockerRepository = imageDockerInfo.getDockerRepository();
-    String dockerTag = imageDockerInfo.getDockerTag();
+    String dockerRepository = imageDockerInputdownloading.getDockerRepository();
+    String dockerTag = imageDockerInputdownloading.getDockerTag();
 
     String result = null;
 
@@ -50,4 +50,5 @@ public class DigestUtil {
 
     return result;
   }
+
 }
