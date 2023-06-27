@@ -3,6 +3,10 @@ package saps.dispatcher.interfaces;
 import java.util.Date;
 import java.util.List;
 
+import javax.print.attribute.standard.JobState;
+
+import saps.dispatcher.interfaces.SapsUserJob;
+
 public interface CatalogUtils {
 
     static List<SapsImage> getTasksOngoingWithPagination(Catalog catalog, String search, Integer page, Integer size,
@@ -48,6 +52,25 @@ public interface CatalogUtils {
 
     static List<SapsImage> getProcessedTasks(Catalog catalog, String region, Date initDate, Date endDate,
             String inputdownloadingPhaseTag, String preprocessingPhaseTag, String processingPhaseTag, String string) {
+        return null;
+    }
+
+    static void addNewUserJob(Catalog catalog, String jobId, String lowerLeftLatitude, String lowerLeftLongitude,
+            String upperRightLatitude, String upperRightLongitude, String userEmail, String jobLabel, Date startDate,
+            Date endDate, int priority, List<String> tasksIds, String string) {
+    }
+
+    static void insertJobTask(Catalog catalog, String taskId, String jobId, String string) {
+    }
+
+    static List<SapsUserJob> getUserJobs(Catalog catalog, JobState state, String search, Integer page, Integer size,
+            String sortField, String sortOrder, boolean withoutTasks, boolean recoverOngoing, boolean recoverCompleted,
+            String string) {
+        return null;
+    }
+
+    static Integer getUserJobsCount(Catalog catalog, JobState state, String search, boolean recoverOngoing,
+            boolean recoverCompleted, String string) {
         return null;
     }
 

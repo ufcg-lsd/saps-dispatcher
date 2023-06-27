@@ -15,6 +15,8 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.UUID;
 
+import javax.print.attribute.standard.JobState;
+
 import org.apache.log4j.Logger;
 
 import saps.dispatcher.interfaces.*;
@@ -224,7 +226,8 @@ public class SubmissionDispatcher {
    *                                 information is obtained automatically
    *                                 by the authenticated user on the platform).
    */
-  public List<String> addTasks(
+  public List<String> createJobTasks(
+      String jobId,
       String lowerLeftLatitude,
       String lowerLeftLongitude,
       String upperRightLatitude,
@@ -235,7 +238,8 @@ public class SubmissionDispatcher {
       String preprocessingPhaseTag,
       String processingPhaseTag,
       int priority,
-      String userEmail)
+      String userEmail,
+      String label)
       throws Exception {
 
         List<String> taskIds = new LinkedList<String>();
@@ -285,6 +289,7 @@ public class SubmissionDispatcher {
                   processingPhaseTag,
                   digestProcessing);
               addTimestampTaskInCatalog(task, "updates task [" + taskId + "] timestamp");
+              insertJobTask(taskId, jobId);
               taskIds.add(taskId);
             }
           }
@@ -294,6 +299,58 @@ public class SubmissionDispatcher {
   }
 
   private void addTimestampTaskInCatalog(SapsImage task, String string) {
+  }
+
+  public List<String> createJobSubmission(
+      String lowerLeftLatitude,
+      String lowerLeftLongitude,
+      String upperRightLatitude,
+      String upperRightLongitude,
+      Date initDate,
+      Date endDate,
+      String inputdownloadingPhaseTag,
+      String preprocessingPhaseTag,
+      String processingPhaseTag,
+      int priority,
+      String userEmail,
+      String label)
+      throws Exception {
+    
+    List<String> taskIds = new ArrayList<String>();
+    String jobId = UUID.randomUUID().toString();
+    addUserJob(
+        jobId,
+        lowerLeftLatitude,
+        lowerLeftLongitude,
+        upperRightLatitude,
+        upperRightLongitude,
+        initDate,
+        endDate,
+        priority,
+        label,
+        taskIds,
+        userEmail
+        );
+
+    LOGGER.info("Job [" + jobId + "] was created");
+    //we should use thread here 
+    taskIds = createJobTasks(
+        jobId,
+        lowerLeftLatitude,
+        lowerLeftLongitude,
+        upperRightLatitude,
+        upperRightLongitude,
+        initDate,
+        endDate,
+        inputdownloadingPhaseTag,
+        preprocessingPhaseTag,
+        processingPhaseTag,
+        priority,
+        userEmail,
+        label);
+    
+    LOGGER.debug("created tasks");
+    return taskIds;
   }
 
   private void addUserJob(
@@ -324,6 +381,17 @@ public class SubmissionDispatcher {
         "add new job [" + jobLabel + "]");
   }
 
+  private void insertJobTask(
+      String taskId,
+      String jobId) {
+    CatalogUtils.insertJobTask(
+        catalog,
+        taskId,
+        jobId,
+        "insert task [" + taskId + "]" + " into job [" + jobId + "]");
+  }
+
+
   public List<SapsImage> getTasks(String search, Integer page, Integer size,
     String sortField, String sortOrder, ImageTaskState state) throws SQLException {
     
@@ -349,6 +417,39 @@ public class SubmissionDispatcher {
 
   public SapsImage getTask(String taskId) {
     return CatalogUtils.getTaskById(catalog, taskId, "gets task with id [" + taskId + "]");
+  }
+
+  /**
+   * This function get all saps user job in Catalog.
+   * 
+   * @param state              state of jobs
+   * @param search             search string
+   * @param page               page number
+   * @param size               page size
+   * @param sortField          sort field
+   * @param sortOrder          sort order
+   * @param withoutTasks       without tasks
+   * @param recoverOngoing     if true, only ongoing jobs will be recovered
+   * @param recoverCompleted   if true, only completed jobs will be recovered
+   * @return list of jobs
+   */
+  public List<SapsUserJob> getAllJobs(JobState state, String search, Integer page, Integer size, String sortField,
+      String sortOrder, boolean withoutTasks, boolean recoverOngoing, boolean recoverCompleted) {
+    return CatalogUtils.getUserJobs(catalog, state, search, page, size, sortField, sortOrder, withoutTasks,
+        recoverOngoing, recoverCompleted, "get jobs");
+  }
+
+  /**
+   * This function get tha amount of all jobs in Catalog.
+   * 
+   * @param state              state of jobs
+   * @param search             search string
+   * @param recoverOngoing     if true, only ongoing jobs will be recovered
+   * @param recoverCompleted   if true, only completed jobs will be recovered
+   * @return amount of all jobs
+   */
+  public Integer getJobsCount(JobState state, String search, boolean recoverOngoing, boolean recoverCompleted) {
+    return CatalogUtils.getUserJobsCount(catalog, state, search, recoverOngoing, recoverCompleted, "get amount of jobs");
   }
 
 
