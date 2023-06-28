@@ -25,7 +25,7 @@ import saps.dispatcher.utils.DatasetUtil;
 import saps.dispatcher.utils.DigestUtil;
 import saps.dispatcher.utils.RegionUtil;
 
-public class SubmissionDispatcher {
+public class SubmissionDispatcher implements Dispatcher {
 
   public static final String EXECUTION_TAGS_FILE_PATH_KEY = "EXECUTION_SCRIPT_TAGS_FILE_PATH";
   private final Catalog catalog;
@@ -226,7 +226,7 @@ public class SubmissionDispatcher {
    *                                 information is obtained automatically
    *                                 by the authenticated user on the platform).
    */
-  public List<String> createJobTasks(
+  private List<String> createJobTasks(
       String jobId,
       String lowerLeftLatitude,
       String lowerLeftLongitude,

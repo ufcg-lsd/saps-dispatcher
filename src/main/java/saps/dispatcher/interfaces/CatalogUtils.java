@@ -72,4 +72,9 @@ public interface CatalogUtils {
         return null;
     }
 
+    static Integer getUserJobTasksCount(Catalog catalog, String jobId, ImageTaskState state, String search,
+            boolean recoverOngoing, boolean recoverCompleted, String string) {
+        return null;
+    }
+
 }

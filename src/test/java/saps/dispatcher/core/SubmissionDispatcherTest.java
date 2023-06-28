@@ -14,6 +14,8 @@ import saps.dispatcher.interfaces.SapsUser;
 import saps.dispatcher.interfaces.SapsUserJob;
 
 import static org.junit.Assert.*;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -36,7 +38,7 @@ import org.junit.runner.RunWith;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({CatalogUtils.class})
-public class SubmissionDispatcherTest implements Dispatcher {
+public class SubmissionDispatcherTest {
 
     Dispatcher submissionDispatcher;
     Properties properties;
@@ -64,70 +66,99 @@ public class SubmissionDispatcherTest implements Dispatcher {
     }
 
     @Test
-    public List<String> createJobSubmission(String lowerLeftLatitude, String lowerLeftLongitude,
-            String upperRightLatitude, String upperRightLongitude, Date initDate, Date endDate,
-            String inputdownloadingPhaseTag, String preprocessingPhaseTag, String processingPhaseTag, int priority,
-            String userEmail, String label) throws Exception {
+    public void testCreateJobSubmission() throws Exception {
 
-         return null;
+        String lowerLeftLatitude = "10.0";
+        String lowerLeftLongitude = "20.0";
+        String upperRightLatitude = "30.0";
+        String upperRightLongitude = "40.0";
+        Date initDate = new Date(0);
+        Date endDate = new Date(1);
+        String inputdownloadingPhaseTag = "inputTag";
+        String preprocessingPhaseTag = "preprocessingTag";
+        String processingPhaseTag = "processingTag";
+        int priority = 1;
+        String userEmail = "test@example.com";
+        String label = "Test Job";
+
+        List<String> taskIds = new ArrayList<>();
+            when(submissionDispatcher.createJobSubmission(
+                lowerLeftLatitude,
+                lowerLeftLongitude,
+                upperRightLatitude,
+                upperRightLongitude,
+                initDate,
+                endDate,
+                inputdownloadingPhaseTag,
+                preprocessingPhaseTag,
+                processingPhaseTag,
+                priority,
+                userEmail,
+                label)
+        ).thenReturn(taskIds);
+
+         List<String> result = submissionDispatcher.createJobSubmission(
+                lowerLeftLatitude,
+                lowerLeftLongitude,
+                upperRightLatitude,
+                upperRightLongitude,
+                initDate,
+                endDate,
+                inputdownloadingPhaseTag,
+                preprocessingPhaseTag,
+                processingPhaseTag,
+                priority,
+                userEmail,
+                label
+        );
+
+        assertEquals(taskIds, result);
     }
 
-    @Override
-    public List<String> createJobsTasks(String lowerLeftLatitude, String lowerLeftLongitude, String upperRightLatitude,
-            String upperRightLongitude, Date initDate, Date endDate, String inputdownloadingPhaseTag,
-            String preprocessingPhaseTag, String processingPhaseTag, int priority, String userEmail) throws Exception {
+    @Test
+    public void testGetTask() {
         // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'createJobsTasks'");
+        submissionDispatcher = new SubmissionDispatcher(catalog);
     }
 
-    @Override
-    public SapsImage getTask(String taskId) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getTask'");
-    }
-
-    @Override
-    public Integer getCountTasks(String search, ImageTaskState state) {
+    @Test
+    public void testGetCountTasks() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getCountTasks'");
     }
 
-    @Override
-    public SapsUser getUser(String email) {
+    @Test
+    public void testGetUser() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getUser'");
     }
 
-    @Override
-    public void addUser(String email, String name, String password, boolean state, boolean notify, boolean adminRole) {
+    @Test
+    public void testAddUser() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'addUser'");
     }
 
-    @Override
-    public List<SapsImage> getProcessedTasks(String lowerLeftLatitude, String lowerLeftLongitude,
-            String upperRightLatitude, String upperRightLongitude, Date initDate, Date endDate,
-            String inputdownloadingPhaseTag, String preprocessingPhaseTag, String processingPhaseTag) {
+    @Test
+    public void testGetProcessedTasks() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getProcessedTasks'");
     }
 
-    @Override
-    public List<SapsUserJob> getAllJobs(JobState state, String search, Integer page, Integer size, String sortField,
-            String sortOrder, boolean withoutTasks, boolean recoverOngoing, boolean recoverCompleted) {
+    @Test
+    public void testGetAllJobs() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getAllJobs'");
     }
 
-    @Override
-    public Integer getJobsCount(JobState state, String search, boolean recoverOngoing, boolean recoverCompleted) {
+    @Test
+    public void testGetJobsCount() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getJobsCount'");
     }
 
-    @Override
-    public List<SapsImage> getJobTasks(String jobId, ImageTaskState state, String search, Integer page, Integer size,
-            String sortField, String sortOrder, boolean recoverOngoing, boolean recoverCompleted) {
+    @Test
+    public void testGetJobTasks() {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'getJobTasks'");
     }

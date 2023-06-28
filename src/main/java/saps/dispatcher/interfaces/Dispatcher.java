@@ -35,20 +35,6 @@ public interface Dispatcher {
     
   Integer getCountTasks(String search, ImageTaskState state);
 
-  List<String> createJobsTasks(
-      String lowerLeftLatitude,
-      String lowerLeftLongitude,
-      String upperRightLatitude,
-      String upperRightLongitude,
-      Date initDate,
-      Date endDate,
-      String inputdownloadingPhaseTag,
-      String preprocessingPhaseTag,
-      String processingPhaseTag,
-      int priority,
-      String userEmail)
-      throws Exception;
-
   SapsUser getUser(String email);
 
   void addUser(
@@ -68,5 +54,5 @@ public interface Dispatcher {
       Date endDate,
       String inputdownloadingPhaseTag,
       String preprocessingPhaseTag,
-      String processingPhaseTag);    
+      String processingPhaseTag)     
 }
