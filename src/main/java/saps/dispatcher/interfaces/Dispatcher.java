@@ -1,10 +1,7 @@
 package saps.dispatcher.interfaces;
 
-import java.sql.Date;
-import java.sql.SQLException;
 import java.util.List;
-
-import javax.print.attribute.standard.JobState;
+import java.util.Date;
 
 public interface Dispatcher {
 
@@ -54,5 +51,5 @@ public interface Dispatcher {
       Date endDate,
       String inputdownloadingPhaseTag,
       String preprocessingPhaseTag,
-      String processingPhaseTag)     
+      String processingPhaseTag);
 }

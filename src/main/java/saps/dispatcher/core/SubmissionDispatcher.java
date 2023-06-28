@@ -4,18 +4,13 @@ package saps.dispatcher.core;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Collections;
 import java.util.Date;
 import java.util.GregorianCalendar;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.UUID;
-
-import javax.print.attribute.standard.JobState;
 
 import org.apache.log4j.Logger;
 
@@ -300,7 +295,7 @@ public class SubmissionDispatcher implements Dispatcher {
 
   private void addTimestampTaskInCatalog(SapsImage task, String string) {
   }
-
+  
   public List<String> createJobSubmission(
       String lowerLeftLatitude,
       String lowerLeftLongitude,
@@ -452,6 +447,27 @@ public class SubmissionDispatcher implements Dispatcher {
     return CatalogUtils.getUserJobsCount(catalog, state, search, recoverOngoing, recoverCompleted, "get amount of jobs");
   }
 
+  /**
+   * This function get the jobs tasks in Catalog based on the job id.
+   *
+   * @param jobId              job id to be searched
+   * @param state              state of jobs
+   * @param search             search string
+   * @param page               page number
+   * @param size               page size
+   * @param sortField          sort field
+   * @param sortOrder          sort order
+   * @param recoverOngoing     if true, only ongoing tasks will be recovered
+   * @param recoverCompleted   if true, only completed jobs will be recovered
+   * @return saps user job with specific id
+   * @throws SQLException
+   */
+  public List<SapsImage> getJobTasks(String jobId, ImageTaskState state, String search, Integer page,
+      Integer size, String sortField, String sortOrder, boolean recoverOngoing, boolean recoverCompleted) {
+    return CatalogUtils.getUserJobTasks(catalog, jobId, state, search, page, size, sortField, sortOrder,
+        recoverOngoing, recoverCompleted, "get job tasks");
+  }
+
   public Integer getJobTasksCount(String jobId, ImageTaskState state, String search, boolean recoverOngoing, boolean recoverCompleted) {
     return CatalogUtils.getUserJobTasksCount(catalog, jobId, state, search, recoverOngoing, recoverCompleted, "get amount of tasks");
   }
@@ -557,4 +573,5 @@ public class SubmissionDispatcher implements Dispatcher {
     }
     return filteredTasks;
   }
+
 }

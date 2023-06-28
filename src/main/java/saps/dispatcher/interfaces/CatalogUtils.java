@@ -3,8 +3,6 @@ package saps.dispatcher.interfaces;
 import java.util.Date;
 import java.util.List;
 
-import javax.print.attribute.standard.JobState;
-
 public interface CatalogUtils {
 
     static List<SapsImage> getTasksOngoingWithPagination(Catalog catalog, String search, Integer page, Integer size,
@@ -74,6 +72,12 @@ public interface CatalogUtils {
 
     static Integer getUserJobTasksCount(Catalog catalog, String jobId, ImageTaskState state, String search,
             boolean recoverOngoing, boolean recoverCompleted, String string) {
+        return null;
+    }
+
+    static List<SapsImage> getUserJobTasks(Catalog catalog, String jobId, ImageTaskState state, String search,
+            Integer page, Integer size, String sortField, String sortOrder, boolean recoverOngoing,
+            boolean recoverCompleted, String string) {
         return null;
     }
 
