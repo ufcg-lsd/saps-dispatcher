@@ -184,7 +184,29 @@ public class SubmissionDispatcherTest {
         assertTrue(jobs.size() == result);
         
     }
- 
+    
+    @Test
+    public void testGetAllJobs() {
+        List<SapsUserJob> mockedJobs = new ArrayList<>();
+        List<SapsUserJob> retrievedJobs = new ArrayList<>();
+
+        SapsUserJob job1 = Mockito.mock(SapsUserJob.class);
+        SapsUserJob job2 = Mockito.mock(SapsUserJob.class);
+        SapsUserJob job3 = Mockito.mock(SapsUserJob.class);
+
+        mockedJobs.add(job1);
+        mockedJobs.add(job2);
+        mockedJobs.add(job3);
+
+        PowerMockito.mockStatic(CatalogUtils.class);
+
+        when(CatalogUtils.getUserJobs(catalog, null, null, null, null, null, null, false, false, false, "get jobs")).thenReturn(mockedJobs);
+
+        retrievedJobs = submissionDispatcher.getAllJobs(null, null, null, null, null, null, false, false, false);
+
+        assertArrayEquals(mockedJobs.toArray(), retrievedJobs.toArray());
+    }
+
     @Test
     public void testGetJobTasksOnGoing() {
         String jobId = "123";
