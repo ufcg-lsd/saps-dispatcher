@@ -328,7 +328,7 @@ public class SubmissionDispatcher implements Dispatcher {
         );
 
     LOGGER.info("Job [" + jobId + "] was created");
-    //we should use thread here 
+
     taskIds = createJobTasks(
         jobId,
         lowerLeftLatitude,

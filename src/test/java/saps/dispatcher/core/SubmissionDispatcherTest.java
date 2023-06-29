@@ -1,7 +1,6 @@
 package saps.dispatcher.core;
 
 import java.sql.Date;
-import java.sql.SQLException;
 import java.util.List;
 
 import saps.dispatcher.interfaces.Catalog;
@@ -16,6 +15,9 @@ import saps.dispatcher.interfaces.SapsUserJob;
 import saps.dispatcher.utils.RegionUtil;
 
 import static org.junit.Assert.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -31,19 +33,18 @@ import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
 
-import javax.swing.plaf.synth.Region;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({CatalogUtils.class})
+@PrepareForTest({CatalogUtils.class, RegionUtil.class})
 public class SubmissionDispatcherTest {
 
     Dispatcher submissionDispatcher;
     Properties properties;
+    RegionUtil regionUtil;
 	
 	@Mock		
 	Catalog catalog = mock(Catalog.class);
@@ -73,41 +74,94 @@ public class SubmissionDispatcherTest {
     public void setup() {
         MockitoAnnotations.openMocks(this);
         properties = new Properties();
+        regionUtil = new RegionUtil();
         submissionDispatcher = new SubmissionDispatcher(catalog);
+    }
+
+    @Test 
+    public void testCreateJobSubmission() {
+        PowerMockito.mockStatic(CatalogUtils.class);
+        PowerMockito.mockStatic(RegionUtil.class);
+
+        String lowerLeftLatitude = "37.7749";  
+        String lowerLeftLongitude = "-122.4194";  
+        String upperRightLatitude = "37.8044";  
+        String upperRightLongitude = "-122.4080";  
+
+        Date initDate = new Date(0);  
+        Date endDate = new Date(System.currentTimeMillis() + 86400000); 
+
+        String inputdownloadingPhaseTag = "input_download";
+        String preprocessingPhaseTag = "preprocessing";
+        String processingPhaseTag = "processing";
+
+        int priority = 1;  
+
+        String userEmail = "example@example.com";  
+        String label = "example_label";  
+
+        Set<String> regions = RegionUtil.regionsFromArea(
+            lowerLeftLatitude, lowerLeftLongitude, upperRightLatitude, upperRightLongitude);
+        regions.add("x");   
+
+        List<String> taskIds = new ArrayList<>();
+
+        when(CatalogUtils.addNewTask(catalog, lowerLeftLongitude, upperRightLatitude, upperRightLongitude, endDate, priority, 
+        userEmail, inputdownloadingPhaseTag, inputdownloadingPhaseTag, preprocessingPhaseTag, preprocessingPhaseTag, preprocessingPhaseTag, 
+        processingPhaseTag, label)).thenReturn(sapsImage2);
+
+        when (sapsImage2.getId()).thenReturn("2");
+        
+        taskIds.add(sapsImage2.getId());
+
+        try {
+            List<String> result = submissionDispatcher.createJobSubmission(lowerLeftLatitude, lowerLeftLongitude, upperRightLatitude, upperRightLongitude, 
+            initDate, endDate, inputdownloadingPhaseTag, preprocessingPhaseTag, processingPhaseTag, priority, userEmail, label);
+
+            assertEquals(result, taskIds);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+
     }
 
     @Test 
     public void testGetProcessedTasks() {
         
-      String lowerLeftLatitude = "x";
-      String lowerLeftLongitude = "y";
-      String upperRightLatitude = "z";
-      String upperRightLongitude = "w";
-      Date initDate = new Date(0);
-      Date endDate = new Date(1);
-      String inputdownloadingPhaseTag = "in";
-      String preprocessingPhaseTag = "prep";
-      String processingPhaseTag = "pro";
+        String lowerLeftLatitude = "x";
+        String lowerLeftLongitude = "y";
+        String upperRightLatitude = "z";
+        String upperRightLongitude = "w";
+        Date initDate = new Date(0);
+        Date endDate = new Date(1);
+        String inputdownloadingPhaseTag = "in";
+        String preprocessingPhaseTag = "prep";
+        String processingPhaseTag = "pro";
 
-      PowerMockito.mockStatic(CatalogUtils.class);
-      PowerMockito.mockStatic(RegionUtil.class);
+        PowerMockito.mockStatic(CatalogUtils.class);
+        PowerMockito.mockStatic(RegionUtil.class);
 
-      List<SapsImage> processedTasks = new ArrayList<>();
-      processedTasks.add(sapsImage1);
+        List<SapsImage> processedTasks = new ArrayList<>();
+        processedTasks.add(sapsImage1);
 
-      Set<String> region = new HashSet<>();
-      region.add("x");
+        Set<String> regions = RegionUtil.regionsFromArea(lowerLeftLatitude, lowerLeftLongitude, upperRightLatitude, upperRightLongitude);
+        regions.add("x");
 
-      when(RegionUtil.regionsFromArea(lowerLeftLatitude, lowerLeftLongitude, upperRightLatitude, upperRightLongitude)).thenReturn(region);
+        when(RegionUtil.regionsFromArea(lowerLeftLatitude, lowerLeftLongitude, upperRightLatitude, upperRightLongitude)).thenReturn(regions);
+        System.out.println(regions.toString());
 
-      when(CatalogUtils.getProcessedTasks(catalog, region, initDate, endDate, inputdownloadingPhaseTag, 
-      preprocessingPhaseTag, preprocessingPhaseTag, processingPhaseTag)).thenReturn(processedTasks);
+        when(CatalogUtils.getProcessedTasks(eq(catalog), anyString(), eq(initDate), eq(endDate), eq(inputdownloadingPhaseTag), 
+        eq(preprocessingPhaseTag), eq(processingPhaseTag), anyString())).thenReturn(processedTasks);
 
-      List<SapsImage> result = submissionDispatcher.getProcessedTasks(lowerLeftLatitude, lowerLeftLongitude, upperRightLatitude, upperRightLongitude, 
+        List<SapsImage> result = submissionDispatcher.getProcessedTasks(lowerLeftLatitude, lowerLeftLongitude, upperRightLatitude, upperRightLongitude, 
       initDate, endDate, inputdownloadingPhaseTag, preprocessingPhaseTag, processingPhaseTag);
 
-      assertEquals(processedTasks, result);
-      assertFalse(result.contains(sapsImage2));
+        assertEquals(processedTasks, result);
+
+        assertFalse(result.contains(sapsImage2));
+        assertTrue(result.contains(sapsImage1));    
     }
 
     @Test
@@ -127,8 +181,6 @@ public class SubmissionDispatcherTest {
         when(CatalogUtils.getUserJobsCount(catalog, jobState, search, recoverOngoing, recoverCompleted, message)).thenReturn(jobs.size());
     
         Integer result = submissionDispatcher.getJobsCount(jobState, search, recoverOngoing, recoverCompleted);
-        System.out.println(jobs.size());
-        System.out.println(result);
         assertTrue(jobs.size() == result);
         
     }
