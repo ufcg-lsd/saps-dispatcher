@@ -23,7 +23,7 @@ import org.restlet.util.Series;
 
 import com.google.gson.Gson;
 
-import saps.common.core.model.SapsImage;
+import saps.dispatcher.interfaces.SapsImage;
 import saps.dispatcher.core.restlet.DatabaseApplication;
 
 public class ImageResource extends BaseResource {

@@ -17,7 +17,6 @@ import org.restlet.resource.Directory;
 import org.restlet.routing.Router;
 import org.restlet.service.ConnectorService;
 import org.restlet.service.CorsService;
-import saps.dispatcher.interfaces.*;
 import saps.dispatcher.core.SubmissionDispatcher;
 import saps.dispatcher.core.restlet.resource.EmailResource;
 import saps.dispatcher.core.restlet.resource.ImageResource;
@@ -26,6 +25,7 @@ import saps.dispatcher.core.restlet.resource.MainResource;
 import saps.dispatcher.core.restlet.resource.RegionResource;
 import saps.dispatcher.core.restlet.resource.TaskResource;
 import saps.dispatcher.core.restlet.resource.UserResource;
+import saps.dispatcher.interfaces.*;
 
 // FIXME Delete any obvious java-doc
 public class DatabaseApplication extends Application {
@@ -38,9 +38,9 @@ public class DatabaseApplication extends Application {
   private SubmissionDispatcher submissionDispatcher;
   private Component restletComponent;
 
-  public DatabaseApplication(Properties properties) throws SapsException, SQLException {
+  public DatabaseApplication(Properties properties) throws Exception, SQLException {
     if (!checkProperties(properties))
-      throw new SapsException(
+      throw new Exception(
           "Error on validate the file. Missing properties for start Database Application.");
 
     this.properties = properties;
@@ -141,8 +141,9 @@ public class DatabaseApplication extends Application {
    * @param processingPhaseTag       processing phase tag
    * @param priority                 priority of new tasks
    * @param email                    user email
+   * @param label                    user label
    */
-  public List<String> addNewTasks(
+  public List<String> createJobSubmission(
       String lowerLeftLatitude,
       String lowerLeftLongitude,
       String upperRightLatitude,
@@ -153,9 +154,10 @@ public class DatabaseApplication extends Application {
       String preprocessingPhaseTag,
       String processingPhaseTag,
       String priority,
-      String email)
+      String email,
+      String label)
       throws Exception {
-    return submissionDispatcher.addTasks(
+    return submissionDispatcher.createJobSubmission(
         lowerLeftLatitude,
         lowerLeftLongitude,
         upperRightLatitude,
@@ -166,7 +168,83 @@ public class DatabaseApplication extends Application {
         preprocessingPhaseTag,
         processingPhaseTag,
         Integer.parseInt(priority),
-        email);
+        email,
+        label);
+  }
+
+  /**
+   * This function get all saps user job in Catalog.
+   * 
+   * @param state          state of jobs
+   * @param search         search string
+   * @param page           page number
+   * @param size           page size
+   * @param sortField      sort field
+   * @param sortOrder      sort order
+   * @param withoutTasks   without tasks
+   * @param recoverOngoing if true, only ongoing jobs will be recovered
+   * @param recoverCompleted if true, only completed tasks will be recovered
+   * @return list of jobs
+   */
+  public List<SapsUserJob> getAllJobs(
+      JobState state,
+      String search,
+      Integer page,
+      Integer size,
+      String sortField,
+      String sortOrder,
+      boolean withoutTasks,
+      boolean recoverOngoing,
+      boolean recoverCompleted) {
+    return submissionDispatcher.getAllJobs(state, search, page, size, sortField, sortOrder, withoutTasks,
+        recoverOngoing, recoverCompleted);
+  }
+
+  /**
+   * This function get tha amount of all jobs in Catalog.
+   * 
+   * @param state          state of jobs
+   * @param search         search string
+   * @param recoverOngoing if true, only ongoing jobs will be recovered
+   * @param recoverCompleted if true, only completed tasks will be recovered
+   * @return amount of all jobs
+   */
+  public Integer getJobsCount(JobState state, String search, boolean recoverOngoing, boolean recoverCompleted) {
+    return submissionDispatcher.getJobsCount(state, search, recoverOngoing, recoverCompleted);
+  }
+
+  /**
+   * This function get the jobs tasks in Catalog based on the job id.
+   *
+   * @param jobId job id to be searched
+   * @param state state of jobs
+   * @param search search string
+   * @param page page number
+   * @param size page size
+   * @param sortField sort field
+   * @param sortOrder sort order
+   * @param recoverOngoing if true, only ongoing tasks will be recovered
+   * @param recoverCompleted if true, only completed tasks will be recovered
+   * @return saps user job with specific id
+   * @throws SQLException
+   */
+  public List<SapsImage> getJobTasks(String jobId, ImageTaskState state, String search, Integer page,
+      Integer size, String sortField, String sortOrder, boolean recoverOngoing, boolean recoverCompleted) {
+    return submissionDispatcher.getJobTasks(jobId, state, search, page, size, sortField, sortOrder, recoverOngoing, recoverCompleted);
+  }
+
+  /**
+   * This function get tha amount of all jobs tasks in Catalog.
+   * 
+   * @param jobId          job id to be searched
+   * @param state          state of jobs
+   * @param search         search string
+   * @param recoverOngoing if true, only ongoing tasks will be recovered
+   * @param recoverCompleted if true, only completed tasks will be recovered
+   * @return amount of all jobs tasks
+   */
+  public Integer getJobTasksCount(String jobId, ImageTaskState state, String search, boolean recoverOngoing, boolean recoverCompleted) {
+    return submissionDispatcher.getJobTasksCount(jobId, state, search, recoverOngoing, recoverCompleted);
   }
 
   /**
@@ -178,33 +256,6 @@ public class DatabaseApplication extends Application {
    */
   public SapsImage getTask(String taskId) {
     return submissionDispatcher.getTask(taskId);
-  }
-
-  /**
-   * This function gets {@code SapsImage} list in {@code Catalog}.
-   *
-   * @return {@code SapsImage} list
-   */
-  public List<SapsImage> getTasks() {
-    return submissionDispatcher.getAllTasks();
-  }
-
-  public List<SapsImage> getTasksOngoingWithPagination(String search, Integer page, Integer size,
-      String sortField, String sortOrder) {
-    return submissionDispatcher.getTasksOngoingWithPagination(search, page, size, sortField, sortOrder);
-  }
-
-  public List<SapsImage> getTasksCompletedWithPagination(String search, Integer page, Integer size,
-      String sortField, String sortOrder) {
-    return submissionDispatcher.getTasksCompletedWithPagination(search, page, size, sortField, sortOrder);
-  }
-
-  public Integer getCountOngoingTasks(String search) {
-    return submissionDispatcher.getCountOngoingTasks(search);
-  }
-
-  public Integer getCountCompletedTasks(String search) {
-    return submissionDispatcher.getCountCompletedTasks(search);
   }
 
   /**
@@ -257,4 +308,26 @@ public class DatabaseApplication extends Application {
   public List<SapsImage> getTasksInState(ImageTaskState state) throws SQLException {
     return this.submissionDispatcher.getTasksByState(state);
   }
+
+  public List<SapsImage> getTasksOngoingWithPagination(String search, Integer page, Integer size, String sortField,
+      String sortOrder) {
+    return null;
+  }
+
+public Integer getCountOngoingTasks(String search) {
+    return null;
+}
+
+public List<SapsImage> getTasksCompletedWithPagination(String search, Integer page, Integer size, String sortField,
+        String sortOrder) {
+    return null;
+}
+
+public Integer getCountCompletedTasks(String search) {
+    return null;
+}
+
+public List<SapsImage> getTasks() {
+    return null;
+}
 }

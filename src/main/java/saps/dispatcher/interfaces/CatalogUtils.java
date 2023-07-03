@@ -81,4 +81,11 @@ public interface CatalogUtils {
         return null;
     }
 
+    static SapsLandsatImage validateLandsatImage(Catalog catalog, String region, Date date, String string) {
+        return null;
+    }
+
+    static void addTimestampTask(Catalog catalog, SapsImage task) {
+    }
+
 }

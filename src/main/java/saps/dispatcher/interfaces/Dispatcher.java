@@ -191,7 +191,7 @@ public interface Dispatcher {
      *                                 used in the task's
      *                                 processing step.
      */
-     List<SapsImage> getProcessedTasks(
+    List<SapsImage> getProcessedTasks(
         String lowerLeftLatitude,
         String lowerLeftLongitude,
         String upperRightLatitude,
@@ -201,4 +201,5 @@ public interface Dispatcher {
         String inputdownloadingPhaseTag,
         String preprocessingPhaseTag,
         String processingPhaseTag);
+    
 }

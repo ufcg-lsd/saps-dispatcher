@@ -13,14 +13,7 @@ import org.restlet.representation.Representation;
 import org.restlet.representation.StringRepresentation;
 import org.restlet.resource.Get;
 import org.restlet.resource.ResourceException;
-import saps.common.core.model.SapsImage;
-import saps.common.core.storage.AccessLink;
-import saps.common.core.storage.PermanentStorage;
-import saps.common.core.storage.PermanentStorageType;
-import saps.common.core.storage.exceptions.TaskNotFoundException;
-import saps.common.core.storage.nfs.NfsPermanentStorage;
-import saps.common.core.storage.swift.SwiftPermanentStorage;
-import saps.common.utils.SapsPropertiesConstants;
+import saps.dispatcher.interfaces.*;
 
 public class LinkResource extends BaseResource {
 
@@ -56,7 +49,7 @@ public class LinkResource extends BaseResource {
       List<AccessLink> links = permanentStorage.generateAccessLinks(sapsTask);
 
       return new StringRepresentation(gson.toJson(links), MediaType.APPLICATION_JSON);
-    } catch (TaskNotFoundException e) {
+    } catch (NullPointerException e) {
       LOGGER.error("Error while getting task by id", e);
     } catch (Exception e) {
       LOGGER.error("Error while create permanent storage", e);

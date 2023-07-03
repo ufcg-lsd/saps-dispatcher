@@ -269,33 +269,34 @@ public class SubmissionDispatcher implements Dispatcher {
     
             for (String region : regions) {
               String taskId = UUID.randomUUID().toString();
+              Boolean isValidImage = validateLandsatImage(region, cal.getTime());
+
+              if (isValidImage) {
     
-              SapsImage task = addTask(
-                  taskId,
-                  dataset,
-                  region,
-                  cal.getTime(),
-                  priority,
-                  userEmail,
-                  inputdownloadingPhaseTag,
-                  digestInputdownloading,
-                  preprocessingPhaseTag,
-                  digestPreprocessing,
-                  processingPhaseTag,
-                  digestProcessing);
-              addTimestampTaskInCatalog(task, "updates task [" + taskId + "] timestamp");
-              insertJobTask(taskId, jobId);
-              taskIds.add(taskId);
+                SapsImage task = addTask(
+                    taskId,
+                    dataset,
+                    region,
+                    cal.getTime(),
+                    priority,
+                    userEmail,
+                    inputdownloadingPhaseTag,
+                    digestInputdownloading,
+                    preprocessingPhaseTag,
+                    digestPreprocessing,
+                    processingPhaseTag,
+                    digestProcessing);
+                insertJobTask(taskId, jobId);
+                addTimestampTaskInCatalog(task, "update task [" + taskId + "] timestamp");
+                taskIds.add(taskId);
             }
           }
+        }
           cal.add(Calendar.DAY_OF_YEAR, 1);
         }
         return taskIds;
   }
 
-  private void addTimestampTaskInCatalog(SapsImage task, String string) {
-  }
-  
   public List<String> createJobSubmission(
       String lowerLeftLatitude,
       String lowerLeftLongitude,
@@ -348,6 +349,14 @@ public class SubmissionDispatcher implements Dispatcher {
     return taskIds;
   }
 
+  public List<SapsImage> getTasksByState(ImageTaskState state) throws SQLException {
+    return CatalogUtils.getTasks(catalog, state);
+  }
+
+  private void addTimestampTaskInCatalog(SapsImage task, String message) {
+    CatalogUtils.addTimestampTask(catalog, task);
+  }
+
   private void addUserJob(
       String jobId,
       String lowerLeftLatitude,
@@ -386,6 +395,22 @@ public class SubmissionDispatcher implements Dispatcher {
         "insert task [" + taskId + "]" + " into job [" + jobId + "]");
   }
 
+  /**
+   * It checks if the {@code SapsImage} is valid.
+   * 
+   * @param region is the location of the satellite data following the global
+   * @param date   is the date on which the satellite data was collected following
+   * @return true if the {@code SapsImage} is valid, false otherwise.
+   */
+  private Boolean validateLandsatImage(String region, Date date) {
+    SapsLandsatImage sapsLandsatImage = CatalogUtils.validateLandsatImage(
+        catalog,
+        region,
+        date,
+        "Validate Landsat Image " + date + " " + region);
+
+    return sapsLandsatImage != null;
+  }
 
   public List<SapsImage> getTasks(String search, Integer page, Integer size,
     String sortField, String sortOrder, ImageTaskState state) throws SQLException {
@@ -414,20 +439,6 @@ public class SubmissionDispatcher implements Dispatcher {
     return CatalogUtils.getTaskById(catalog, taskId, "gets task with id [" + taskId + "]");
   }
 
-  /**
-   * This function get all saps user job in Catalog.
-   * 
-   * @param state              state of jobs
-   * @param search             search string
-   * @param page               page number
-   * @param size               page size
-   * @param sortField          sort field
-   * @param sortOrder          sort order
-   * @param withoutTasks       without tasks
-   * @param recoverOngoing     if true, only ongoing jobs will be recovered
-   * @param recoverCompleted   if true, only completed jobs will be recovered
-   * @return list of jobs
-   */
   public List<SapsUserJob> getAllJobs(JobState state, String search, Integer page, Integer size, String sortField,
       String sortOrder, boolean withoutTasks, boolean recoverOngoing, boolean recoverCompleted) {
     return CatalogUtils.getUserJobs(catalog, state, search, page, size, sortField, sortOrder, withoutTasks,
@@ -447,21 +458,6 @@ public class SubmissionDispatcher implements Dispatcher {
     return CatalogUtils.getUserJobsCount(catalog, state, search, recoverOngoing, recoverCompleted, "get amount of jobs");
   }
 
-  /**
-   * This function get the jobs tasks in Catalog based on the job id.
-   *
-   * @param jobId              job id to be searched
-   * @param state              state of jobs
-   * @param search             search string
-   * @param page               page number
-   * @param size               page size
-   * @param sortField          sort field
-   * @param sortOrder          sort order
-   * @param recoverOngoing     if true, only ongoing tasks will be recovered
-   * @param recoverCompleted   if true, only completed jobs will be recovered
-   * @return saps user job with specific id
-   * @throws SQLException
-   */
   public List<SapsImage> getJobTasks(String jobId, ImageTaskState state, String search, Integer page,
       Integer size, String sortField, String sortOrder, boolean recoverOngoing, boolean recoverCompleted) {
     return CatalogUtils.getUserJobTasks(catalog, jobId, state, search, page, size, sortField, sortOrder,
@@ -472,67 +468,6 @@ public class SubmissionDispatcher implements Dispatcher {
     return CatalogUtils.getUserJobTasksCount(catalog, jobId, state, search, recoverOngoing, recoverCompleted, "get amount of tasks");
   }
 
-
-  /**
-   * It gets processed {@code SapsImage} in {@code Catalog} by filtering for
-   * parameters.
-   *
-   * @param lowerLeftLatitude        is a geographic coordinate plus the lower
-   *                                 left defined in the sphere
-   *                                 which is the angle between the plane of the
-   *                                 equator and the normal to the reference
-   *                                 surface
-   *                                 indicating the vertex of the polygon formed
-   *                                 together with the information
-   *                                 lowerLeftLongitude, upperRightLatitude and
-   *                                 upperRightLongitude.
-   * @param lowerLeftLongitude       is a geographic coordinate plus the lower
-   *                                 left defined in the sphere
-   *                                 measured in degrees, from 0 to 180 towards
-   *                                 east or west, from the Greenwich Meridian
-   *                                 indicating the vertex of the polygon formed
-   *                                 together with the information
-   *                                 lowerLeftLatitude, upperRightLatitude and
-   *                                 upperRightLongitude.
-   * @param upperRightLatitude       is a geographic coordinate plus the upper
-   *                                 right defined in the sphere
-   *                                 which is the angle between the plane of the
-   *                                 equator and the normal to the reference
-   *                                 surface
-   *                                 indicating the vertex of the polygon formed
-   *                                 together with the information
-   *                                 lowerLeftLatitude, lowerLeftLongitude and
-   *                                 upperRightLongitude.
-   * @param upperRightLongitude      is a geographic coordinate plus the upper
-   *                                 right defined in the
-   *                                 sphere measured in degrees, from 0 to 180
-   *                                 towards east or west, from the Greenwich
-   *                                 Meridian
-   *                                 indicating the vertex of the polygon formed
-   *                                 together with the information
-   *                                 lowerLeftLatitude, lowerLeftLongitude and
-   *                                 upperRightLatitude.
-   * @param initDate                 it is the starting date (according to the
-   *                                 Gregorian calendar) of the interval
-   *                                 in which the satellite data collection date
-   *                                 must belong. If it belongs, a SAPS task will
-   *                                 be
-   *                                 created to process the satellite data.
-   * @param endDate                  It is the end date (according to the
-   *                                 Gregorian calendar) of the interval in
-   *                                 which the satellite data collection date must
-   *                                 belong. If this belongs, a SAPS task will be
-   *                                 created to process the satellite data.
-   * @param inputdownloadingPhaseTag is the version of the algorithm that will be
-   *                                 used in the task's
-   *                                 inputdownloading step.
-   * @param preprocessingPhaseTag    is the version of the algorithm that will be
-   *                                 used in the task's
-   *                                 preprocessing step.
-   * @param processingPhaseTag       is the version of the algorithm that will be
-   *                                 used in the task's
-   *                                 processing step.
-   */
   public List<SapsImage> getProcessedTasks(
       String lowerLeftLatitude,
       String lowerLeftLongitude,

@@ -10,7 +10,7 @@ import org.restlet.representation.Representation;
 import org.restlet.representation.StringRepresentation;
 import org.restlet.resource.Get;
 import org.restlet.resource.ResourceException;
-import saps.common.core.model.SapsImage;
+import saps.dispatcher.interfaces.SapsImage;
 
 public class TaskResource extends BaseResource {
 
