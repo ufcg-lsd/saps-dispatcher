@@ -330,4 +330,10 @@ public Integer getCountCompletedTasks(String search) {
 public List<SapsImage> getTasks() {
     return null;
 }
+
+public List<String> addNewTasks(String lowerLeftLatitude, String lowerLeftLongitude, String upperRightLatitude,
+        String upperRightLongitude, Date initDate, Date endDate, String inputdownloadingPhaseTag,
+        String preprocessingPhaseTag, String processingPhaseTag, String priority, String email) {
+    return null;
+}
 }

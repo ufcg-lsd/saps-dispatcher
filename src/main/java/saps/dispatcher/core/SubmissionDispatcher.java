@@ -35,20 +35,6 @@ public class SubmissionDispatcher implements Dispatcher {
     this.catalog = new JDBCCatalog(properties);
   }
 
-  /**
-   * It adds new User in {@code Catalog}.
-   *
-   * @param email     user email used for authentication on the SAPS platform
-   * @param name      user name on the SAPS platform
-   * @param password  user password used for authentication on the SAPS platform
-   * @param notify    informs the user about their tasks by email.<br>
-   * @param state     informs if the user is able to authenticate on the SAPS
-   *                  platform (it for default
-   *                  is false)
-   * @param adminRole administrative role: informs if the user is an administrator
-   *                  of the SAPS
-   *                  platform (it for default is false)
-   */
   public void addUser(
       String email,
       String name,

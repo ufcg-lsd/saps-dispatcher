@@ -7,6 +7,9 @@ public interface SapsPropertiesConstants {
     String DATASET_LC8_TYPE = null;
     String SUBMISSION_REST_SERVER_PORT = null;
     String PERMANENT_STORAGE_TASKS_DIR = null;
+    String SAPS_PERMANENT_STORAGE_TYPE = null;
+    String NO_REPLY_EMAIL = null;
+    String NO_REPLY_PASS = null;
 
     public final class Openstack {
 

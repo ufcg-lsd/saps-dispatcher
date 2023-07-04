@@ -114,6 +114,7 @@ public interface Dispatcher {
      */
      SapsUser getUser(String email);
 
+     
     /**
      * It adds new User in {@code Catalog}.
      *
@@ -128,7 +129,7 @@ public interface Dispatcher {
      *                  of the SAPS
      *                  platform (it for default is false)
      */
-    void addUser( String email, String name, String password, boolean state, boolean notify, boolean adminRole);
+    void addUser(String email, String name, String password, boolean state, boolean notify, boolean adminRole);
 
 
     /**
@@ -201,5 +202,6 @@ public interface Dispatcher {
         String inputdownloadingPhaseTag,
         String preprocessingPhaseTag,
         String processingPhaseTag);
+    
     
 }
