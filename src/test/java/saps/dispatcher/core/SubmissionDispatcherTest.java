@@ -15,7 +15,6 @@ import saps.dispatcher.interfaces.SapsUserJob;
 import saps.dispatcher.utils.RegionUtil;
 
 import static org.junit.Assert.*;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -27,9 +26,7 @@ import org.powermock.modules.junit4.PowerMockRunner;
 
 import org.mockito.*;
 
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
 
@@ -110,7 +107,7 @@ public class SubmissionDispatcherTest {
         userEmail, inputdownloadingPhaseTag, inputdownloadingPhaseTag, preprocessingPhaseTag, preprocessingPhaseTag, preprocessingPhaseTag, 
         processingPhaseTag, label)).thenReturn(sapsImage2);
 
-        when (sapsImage2.getId()).thenReturn("2");
+        when (sapsImage2.getId()).thenReturn("2");  
         
         taskIds.add(sapsImage2.getId());
 
@@ -184,7 +181,7 @@ public class SubmissionDispatcherTest {
         assertTrue(jobs.size() == result);
         
     }
-    
+
     @Test
     public void testGetAllJobs() {
         List<SapsUserJob> mockedJobs = new ArrayList<>();
@@ -206,7 +203,7 @@ public class SubmissionDispatcherTest {
 
         assertArrayEquals(mockedJobs.toArray(), retrievedJobs.toArray());
     }
-
+ 
     @Test
     public void testGetJobTasksOnGoing() {
         String jobId = "123";
