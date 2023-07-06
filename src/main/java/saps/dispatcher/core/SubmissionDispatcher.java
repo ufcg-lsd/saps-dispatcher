@@ -46,98 +46,60 @@ public class SubmissionDispatcher implements Dispatcher {
         catalog, email, name, password, state, notify, adminRole, "add new user [" + email + "]");
   }
 
-  /**
-   * It gets {@code SapsUser} in {@code Catalog}.
-   *
-   * @return an {@code SapsUser} with equal email
-   */
   public SapsUser getUser(String email) {
     return CatalogUtils.getUser(catalog, email, "get user [" + email + "] information");
   }
 
-  /**
-   * It adds a new Task in {@code Catalog}.<br>
-   *
-   * @param taskId                   an unique identifier for the SAPS task.
-   * @param dataset                  it is the type of data set associated with
-   *                                 the new task to be created. Their
-   *                                 values ​​can be:<br>
-   *                                 -- landsat_5: indicates that the task is
-   *                                 related to the LANDSAT 5 satellite
-   *                                 (https://www.usgs.gov/land-resources/nli/landsat/landsat-5)<br>
-   *                                 -- landsat_7: indicates that the task is
-   *                                 related to the LANDSAT 7 satellite
-   *                                 (https://www.usgs.gov/land-resources/nli/landsat/landsat-7)<br>
-   *                                 -- landsat_8: indicates that the task is
-   *                                 related with the LANDSAT 8 satellite data set
-   *                                 (https://www.usgs.gov/land-resources/nli/landsat/landsat-8)<br>
-   * @param region                   is the location of the satellite data
-   *                                 following the global notation system for
-   *                                 Landsat data (WRS:
-   *                                 https://landsat.gsfc.nasa.gov/the-worldwide-reference-system),
-   *                                 following
-   *                                 the PPPRRR form, where PPP is a length-3 to
-   *                                 the path number and RRR is a length-3 to the
-   *                                 row number.
-   * @param date                     is the date on which the satellite data was
-   *                                 collected following the YYYY/MM/DD
-   *                                 format.
-   * @param priority                 is an integer in the [0, 31] range that
-   *                                 indicates the priority of task
-   *                                 processing.
-   * @param userEmail                it is the email of the user that has
-   *                                 submitted the task
-   * @param inputdownloadingPhaseTag is the version of the algorithm that will be
-   *                                 used in the task's
-   *                                 inputdownloading step
-   * @param digestInputdownloading   is the version of the algorithm that will be
-   *                                 used in the task's
-   *                                 preprocessing step
-   * @param preprocessingPhaseTag    is the version of the algorithm that will be
-   *                                 used in the task's
-   *                                 processing step
-   * @param digestPreprocessing      is the immutable identifier (digest) of the
-   *                                 Docker image of the
-   *                                 version defined in the inputdownloading step
-   *                                 (inputdownloadingPhaseTag)
-   * @param processingPhaseTag       is the immutable identifier (digest) of the
-   *                                 Docker image of the
-   *                                 version defined in the preprocessing step
-   *                                 (preprocessingPhaseTag)
-   * @param digestProcessing         is the immutable identifier (digest) of the
-   *                                 Docker image of the version
-   *                                 defined in the processing step
-   *                                 (processingPhaseTag)
-   * @return the new {@code SapsImage} created and added to this {@code Catalog}.
-   */
-  private SapsImage addTask(
-      String taskId,
-      String dataset,
-      String region,
-      Date date,
+  public List<String> createJobSubmission(
+      String lowerLeftLatitude,
+      String lowerLeftLongitude,
+      String upperRightLatitude,
+      String upperRightLongitude,
+      Date initDate,
+      Date endDate,
+      String inputdownloadingPhaseTag,
+      String preprocessingPhaseTag,
+      String processingPhaseTag,
       int priority,
       String userEmail,
-      String inputdownloadingPhaseTag,
-      String digestInputdownloading,
-      String preprocessingPhaseTag,
-      String digestPreprocessing,
-      String processingPhaseTag,
-      String digestProcessing) {
-    return CatalogUtils.addNewTask(
-        catalog,
-        taskId,
-        dataset,
-        region,
-        date,
+      String label)
+      throws Exception {
+    
+    List<String> taskIds = new ArrayList<String>();
+    String jobId = UUID.randomUUID().toString();
+    addUserJob(
+        jobId,
+        lowerLeftLatitude,
+        lowerLeftLongitude,
+        upperRightLatitude,
+        upperRightLongitude,
+        initDate,
+        endDate,
+        priority,
+        label,
+        taskIds,
+        userEmail
+        );
+
+    LOGGER.info("Job [" + jobId + "] was created");
+
+    taskIds = createJobTasks(
+        jobId,
+        lowerLeftLatitude,
+        lowerLeftLongitude,
+        upperRightLatitude,
+        upperRightLongitude,
+        initDate,
+        endDate,
+        inputdownloadingPhaseTag,
+        preprocessingPhaseTag,
+        processingPhaseTag,
         priority,
         userEmail,
-        inputdownloadingPhaseTag,
-        digestInputdownloading,
-        preprocessingPhaseTag,
-        digestPreprocessing,
-        processingPhaseTag,
-        digestProcessing,
-        "add new task [" + taskId + "]");
+        label);
+    
+    LOGGER.debug("created tasks");
+    return taskIds;
   }
 
   /**
@@ -283,66 +245,6 @@ public class SubmissionDispatcher implements Dispatcher {
         return taskIds;
   }
 
-  public List<String> createJobSubmission(
-      String lowerLeftLatitude,
-      String lowerLeftLongitude,
-      String upperRightLatitude,
-      String upperRightLongitude,
-      Date initDate,
-      Date endDate,
-      String inputdownloadingPhaseTag,
-      String preprocessingPhaseTag,
-      String processingPhaseTag,
-      int priority,
-      String userEmail,
-      String label)
-      throws Exception {
-    
-    List<String> taskIds = new ArrayList<String>();
-    String jobId = UUID.randomUUID().toString();
-    addUserJob(
-        jobId,
-        lowerLeftLatitude,
-        lowerLeftLongitude,
-        upperRightLatitude,
-        upperRightLongitude,
-        initDate,
-        endDate,
-        priority,
-        label,
-        taskIds,
-        userEmail
-        );
-
-    LOGGER.info("Job [" + jobId + "] was created");
-
-    taskIds = createJobTasks(
-        jobId,
-        lowerLeftLatitude,
-        lowerLeftLongitude,
-        upperRightLatitude,
-        upperRightLongitude,
-        initDate,
-        endDate,
-        inputdownloadingPhaseTag,
-        preprocessingPhaseTag,
-        processingPhaseTag,
-        priority,
-        userEmail,
-        label);
-    
-    LOGGER.debug("created tasks");
-    return taskIds;
-  }
-
-  public List<SapsImage> getTasksByState(ImageTaskState state) throws SQLException {
-    return CatalogUtils.getTasks(catalog, state);
-  }
-
-  private void addTimestampTaskInCatalog(SapsImage task, String message) {
-    CatalogUtils.addTimestampTask(catalog, task);
-  }
-
   private void addUserJob(
       String jobId,
       String lowerLeftLatitude,
@@ -379,6 +281,113 @@ public class SubmissionDispatcher implements Dispatcher {
         taskId,
         jobId,
         "insert task [" + taskId + "]" + " into job [" + jobId + "]");
+  }
+
+  public Integer getJobsCount(JobState state, String search, boolean recoverOngoing, boolean recoverCompleted) {
+    return CatalogUtils.getUserJobsCount(catalog, state, search, recoverOngoing, recoverCompleted, "get amount of jobs");
+  }
+
+  public List<SapsImage> getJobTasks(String jobId, ImageTaskState state, String search, Integer page,
+      Integer size, String sortField, String sortOrder, boolean recoverOngoing, boolean recoverCompleted) {
+    return CatalogUtils.getUserJobTasks(catalog, jobId, state, search, page, size, sortField, sortOrder,
+        recoverOngoing, recoverCompleted, "get job tasks");
+  }
+
+  public Integer getJobTasksCount(String jobId, ImageTaskState state, String search, boolean recoverOngoing, boolean recoverCompleted) {
+    return CatalogUtils.getUserJobTasksCount(catalog, jobId, state, search, recoverOngoing, recoverCompleted, "get amount of tasks");
+  }
+
+  /**
+   * It adds a new Task in {@code Catalog}.<br>
+   *
+   * @param taskId                   an unique identifier for the SAPS task.
+   * @param dataset                  it is the type of data set associated with
+   *                                 the new task to be created. Their
+   *                                 values ​​can be:<br>
+   *                                 -- landsat_5: indicates that the task is
+   *                                 related to the LANDSAT 5 satellite
+   *                                 (https://www.usgs.gov/land-resources/nli/landsat/landsat-5)<br>
+   *                                 -- landsat_7: indicates that the task is
+   *                                 related to the LANDSAT 7 satellite
+   *                                 (https://www.usgs.gov/land-resources/nli/landsat/landsat-7)<br>
+   *                                 -- landsat_8: indicates that the task is
+   *                                 related with the LANDSAT 8 satellite data set
+   *                                 (https://www.usgs.gov/land-resources/nli/landsat/landsat-8)<br>
+   * @param region                   is the location of the satellite data
+   *                                 following the global notation system for
+   *                                 Landsat data (WRS:
+   *                                 https://landsat.gsfc.nasa.gov/the-worldwide-reference-system),
+   *                                 following
+   *                                 the PPPRRR form, where PPP is a length-3 to
+   *                                 the path number and RRR is a length-3 to the
+   *                                 row number.
+   * @param date                     is the date on which the satellite data was
+   *                                 collected following the YYYY/MM/DD
+   *                                 format.
+   * @param priority                 is an integer in the [0, 31] range that
+   *                                 indicates the priority of task
+   *                                 processing.
+   * @param userEmail                it is the email of the user that has
+   *                                 submitted the task
+   * @param inputdownloadingPhaseTag is the version of the algorithm that will be
+   *                                 used in the task's
+   *                                 inputdownloading step
+   * @param digestInputdownloading   is the version of the algorithm that will be
+   *                                 used in the task's
+   *                                 preprocessing step
+   * @param preprocessingPhaseTag    is the version of the algorithm that will be
+   *                                 used in the task's
+   *                                 processing step
+   * @param digestPreprocessing      is the immutable identifier (digest) of the
+   *                                 Docker image of the
+   *                                 version defined in the inputdownloading step
+   *                                 (inputdownloadingPhaseTag)
+   * @param processingPhaseTag       is the immutable identifier (digest) of the
+   *                                 Docker image of the
+   *                                 version defined in the preprocessing step
+   *                                 (preprocessingPhaseTag)
+   * @param digestProcessing         is the immutable identifier (digest) of the
+   *                                 Docker image of the version
+   *                                 defined in the processing step
+   *                                 (processingPhaseTag)
+   * @return the new {@code SapsImage} created and added to this {@code Catalog}.
+   */
+  private SapsImage addTask(
+      String taskId,
+      String dataset,
+      String region,
+      Date date,
+      int priority,
+      String userEmail,
+      String inputdownloadingPhaseTag,
+      String digestInputdownloading,
+      String preprocessingPhaseTag,
+      String digestPreprocessing,
+      String processingPhaseTag,
+      String digestProcessing) {
+    return CatalogUtils.addNewTask(
+        catalog,
+        taskId,
+        dataset,
+        region,
+        date,
+        priority,
+        userEmail,
+        inputdownloadingPhaseTag,
+        digestInputdownloading,
+        preprocessingPhaseTag,
+        digestPreprocessing,
+        processingPhaseTag,
+        digestProcessing,
+        "add new task [" + taskId + "]");
+  }
+
+  public List<SapsImage> getTasksByState(ImageTaskState state) throws SQLException {
+    return CatalogUtils.getTasks(catalog, state);
+  }
+
+  private void addTimestampTaskInCatalog(SapsImage task, String message) {
+    CatalogUtils.addTimestampTask(catalog, task);
   }
 
   /**
@@ -429,29 +438,6 @@ public class SubmissionDispatcher implements Dispatcher {
       String sortOrder, boolean withoutTasks, boolean recoverOngoing, boolean recoverCompleted) {
     return CatalogUtils.getUserJobs(catalog, state, search, page, size, sortField, sortOrder, withoutTasks,
         recoverOngoing, recoverCompleted, "get jobs");
-  }
-
-  /**
-   * This function get tha amount of all jobs in Catalog.
-   * 
-   * @param state              state of jobs
-   * @param search             search string
-   * @param recoverOngoing     if true, only ongoing jobs will be recovered
-   * @param recoverCompleted   if true, only completed jobs will be recovered
-   * @return amount of all jobs
-   */
-  public Integer getJobsCount(JobState state, String search, boolean recoverOngoing, boolean recoverCompleted) {
-    return CatalogUtils.getUserJobsCount(catalog, state, search, recoverOngoing, recoverCompleted, "get amount of jobs");
-  }
-
-  public List<SapsImage> getJobTasks(String jobId, ImageTaskState state, String search, Integer page,
-      Integer size, String sortField, String sortOrder, boolean recoverOngoing, boolean recoverCompleted) {
-    return CatalogUtils.getUserJobTasks(catalog, jobId, state, search, page, size, sortField, sortOrder,
-        recoverOngoing, recoverCompleted, "get job tasks");
-  }
-
-  public Integer getJobTasksCount(String jobId, ImageTaskState state, String search, boolean recoverOngoing, boolean recoverCompleted) {
-    return CatalogUtils.getUserJobTasksCount(catalog, jobId, state, search, recoverOngoing, recoverCompleted, "get amount of tasks");
   }
 
   public List<SapsImage> getProcessedTasks(
