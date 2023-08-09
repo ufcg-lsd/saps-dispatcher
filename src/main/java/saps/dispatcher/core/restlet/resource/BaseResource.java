@@ -8,9 +8,7 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.log4j.Logger;
 import org.restlet.data.Form;
 import org.restlet.resource.ServerResource;
-
-import freemarker.core.ReturnInstruction.Return;
-import saps.dispatcher.interfaces.SapsUser;
+import saps.common.core.model.SapsUser;
 import saps.dispatcher.core.restlet.DatabaseApplication;
 
 public class BaseResource extends ServerResource {

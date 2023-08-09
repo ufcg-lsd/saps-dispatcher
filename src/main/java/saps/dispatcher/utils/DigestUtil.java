@@ -5,7 +5,7 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import org.apache.log4j.Logger;
 
-import saps.dispatcher.interfaces.ExecutionScriptTag;
+import saps.common.utils.ExecutionScriptTag;
 
 public class DigestUtil {
 

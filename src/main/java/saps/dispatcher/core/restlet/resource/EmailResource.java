@@ -14,7 +14,14 @@ import org.restlet.representation.Representation;
 import org.restlet.representation.StringRepresentation;
 import org.restlet.resource.Post;
 import org.restlet.resource.ResourceException;
-import saps.dispatcher.interfaces.*;
+import saps.common.core.model.SapsImage;
+import saps.common.core.storage.AccessLink;
+import saps.common.core.storage.exceptions.InvalidPropertyException;
+import saps.archiver.interfaces.PermanentStorage;
+import saps.common.core.storage.exceptions.TaskNotFoundException;
+import saps.archiver.core.FSPermanentStorage;
+
+import saps.common.utils.SapsPropertiesConstants;
 import saps.dispatcher.core.email.TaskCompleteInfo;
 import saps.dispatcher.core.email.TasksEmailSender;
 
@@ -67,17 +74,8 @@ public class EmailResource extends BaseResource {
         "An error occurred while sending the email, please try again later.", MediaType.TEXT_PLAIN);
   }
 
-  private PermanentStorage createPermanentStorage(Properties properties) throws Exception {
-    String permanentStorageType =
-        properties.getProperty(SapsPropertiesConstants.SAPS_PERMANENT_STORAGE_TYPE);
-    // FIXME replace this to a more flexible approach to avoid if/switchs. something
-    // akin the RAS approach to load the plugins - by @thiagomanel and @raonismaneoto
-    if (PermanentStorageType.SWIFT.toString().equalsIgnoreCase(permanentStorageType)) {
-      return new SwiftPermanentStorage(properties);
-    } else if (PermanentStorageType.NFS.toString().equalsIgnoreCase(permanentStorageType)) {
-      return new NfsPermanentStorage(properties);
-    }
-    throw new IOException("Failed to recognize type of permanent storage");
+  private PermanentStorage createPermanentStorage(Properties properties) throws InvalidPropertyException {
+    return new FSPermanentStorage(properties);
   }
 
   private List<TaskCompleteInfo> buildTasksListByTaskIdsList(
@@ -86,9 +84,11 @@ public class EmailResource extends BaseResource {
     List<TaskCompleteInfo> tasksCompleteInfo = new LinkedList<>();
     for (String taskId : tasksId) {
       SapsImage currentTask = application.getTask(taskId);
+
       List<AccessLink> currentTaskAccessLinks = permanentStorage.generateAccessLinks(currentTask);
       TaskCompleteInfo taskCompleteInfo = new TaskCompleteInfo(currentTask, currentTaskAccessLinks);
       tasksCompleteInfo.add(taskCompleteInfo);
+      
     }
     return tasksCompleteInfo;
   }

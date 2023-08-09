@@ -18,8 +18,9 @@ import org.restlet.resource.Get;
 import org.restlet.resource.Post;
 import org.restlet.resource.ResourceException;
 import org.restlet.util.Series;
-import saps.dispatcher.interfaces.SapsImage;
-import saps.dispatcher.interfaces.ImageTaskState;
+
+import saps.common.core.model.SapsImage;
+import saps.common.core.model.enums.ImageTaskState;
 
 public class RegionResource extends BaseResource {
 

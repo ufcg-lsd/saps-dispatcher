@@ -6,7 +6,7 @@ import java.util.Objects;
 import java.util.Properties;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.log4j.Logger;
-import saps.dispatcher.interfaces.*;
+import saps.common.core.model.SapsUser;
 import saps.dispatcher.core.restlet.DatabaseApplication;
 
 public class SubmissionDispatcherMain {

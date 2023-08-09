@@ -2,6 +2,15 @@
 package saps.dispatcher.core.restlet.resource;
 
 import com.google.gson.Gson;
+
+import saps.archiver.core.FSPermanentStorage;
+import saps.common.core.model.SapsImage;
+import saps.common.core.storage.AccessLink;
+import saps.common.utils.SapsPropertiesConstants;
+
+import saps.archiver.interfaces.PermanentStorage;
+import saps.archiver.core.FSPermanentStorage;
+
 import java.io.IOException;
 import java.util.List;
 import java.util.Properties;
@@ -13,7 +22,6 @@ import org.restlet.representation.Representation;
 import org.restlet.representation.StringRepresentation;
 import org.restlet.resource.Get;
 import org.restlet.resource.ResourceException;
-import saps.dispatcher.interfaces.*;
 
 public class LinkResource extends BaseResource {
 
@@ -59,15 +67,8 @@ public class LinkResource extends BaseResource {
   }
 
   private PermanentStorage createPermanentStorage(Properties properties) throws Exception {
-    String permanentStorageType =
-        properties.getProperty(SapsPropertiesConstants.SAPS_PERMANENT_STORAGE_TYPE);
-    // FIXME replace this to a more flexible approach to avoid if/switchs. something
-    // akin the RAS approach to load the plugins - by @thiagomanel and @raonismaneoto
-    if (PermanentStorageType.SWIFT.toString().equalsIgnoreCase(permanentStorageType)) {
-      return new SwiftPermanentStorage(properties);
-    } else if (PermanentStorageType.NFS.toString().equalsIgnoreCase(permanentStorageType)) {
-      return new NfsPermanentStorage(properties);
-    }
-    throw new IOException("Failed to recognize type of permanent storage");
+
+    return new FSPermanentStorage(properties);
+   
   }
 }

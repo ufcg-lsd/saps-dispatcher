@@ -2,6 +2,9 @@
 package saps.dispatcher.core.restlet.resource;
 
 import com.google.gson.Gson;
+
+import saps.common.core.model.SapsImage;
+
 import org.apache.commons.httpclient.HttpStatus;
 import org.apache.log4j.Logger;
 import org.restlet.data.Form;
@@ -10,7 +13,6 @@ import org.restlet.representation.Representation;
 import org.restlet.representation.StringRepresentation;
 import org.restlet.resource.Get;
 import org.restlet.resource.ResourceException;
-import saps.dispatcher.interfaces.SapsImage;
 
 public class TaskResource extends BaseResource {
 

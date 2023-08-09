@@ -4,8 +4,8 @@ package saps.dispatcher.core.email;
 import com.google.gson.annotations.SerializedName;
 import java.util.Date;
 import java.util.List;
-import saps.dispatcher.interfaces.SapsImage;
-import saps.dispatcher.interfaces.AccessLink;
+import saps.common.core.model.SapsImage;
+import saps.common.core.storage.AccessLink;
 
 public class TaskCompleteInfo {
 

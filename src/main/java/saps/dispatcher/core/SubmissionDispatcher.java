@@ -4,6 +4,7 @@ package saps.dispatcher.core;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.LinkedList;
@@ -14,8 +15,16 @@ import java.util.UUID;
 
 import org.apache.log4j.Logger;
 
-import saps.dispatcher.interfaces.*;
-
+import saps.catalog.core.Catalog;
+import saps.catalog.core.jdbc.JDBCCatalog;
+import saps.catalog.core.retry.CatalogUtils;
+import saps.common.core.model.SapsImage;
+import saps.common.core.model.SapsLandsatImage;
+import saps.common.core.model.SapsUser;
+import saps.common.core.model.enums.ImageTaskState;
+import saps.common.utils.ExecutionScriptTag;
+import saps.common.utils.ExecutionScriptTagUtil;
+import saps.dispatcher.interfaces.Dispatcher;
 import saps.dispatcher.utils.DatasetUtil;
 import saps.dispatcher.utils.DigestUtil;
 import saps.dispatcher.utils.RegionUtil;
@@ -50,7 +59,7 @@ public class SubmissionDispatcher implements Dispatcher {
     return CatalogUtils.getUser(catalog, email, "get user [" + email + "] information");
   }
 
-  public List<String> createJobSubmission(
+  public List<String> addTasks(
       String lowerLeftLatitude,
       String lowerLeftLongitude,
       String upperRightLatitude,
@@ -61,240 +70,59 @@ public class SubmissionDispatcher implements Dispatcher {
       String preprocessingPhaseTag,
       String processingPhaseTag,
       int priority,
-      String userEmail,
-      String label)
-      throws Exception {
-    
-    List<String> taskIds = new ArrayList<String>();
-    String jobId = UUID.randomUUID().toString();
-    addUserJob(
-        jobId,
-        lowerLeftLatitude,
-        lowerLeftLongitude,
-        upperRightLatitude,
-        upperRightLongitude,
-        initDate,
-        endDate,
-        priority,
-        label,
-        taskIds,
-        userEmail
-        );
-
-    LOGGER.info("Job [" + jobId + "] was created");
-
-    taskIds = createJobTasks(
-        jobId,
-        lowerLeftLatitude,
-        lowerLeftLongitude,
-        upperRightLatitude,
-        upperRightLongitude,
-        initDate,
-        endDate,
-        inputdownloadingPhaseTag,
-        preprocessingPhaseTag,
-        processingPhaseTag,
-        priority,
-        userEmail,
-        label);
-    
-    LOGGER.debug("created tasks");
-    return taskIds;
-  }
-
-  /**
-   * It gets information about a new processing submission and extract N
-   * {@code SapsImage} for adds
-   * them in {@code Catalog}.
-   *
-   * @param lowerLeftLatitude        is a geographic coordinate plus the lower
-   *                                 left defined in the sphere
-   *                                 which is the angle between the plane of the
-   *                                 equator and the normal to the reference
-   *                                 surface
-   *                                 indicating the vertex of the polygon formed
-   *                                 together with the information
-   *                                 lowerLeftLongitude, upperRightLatitude and
-   *                                 upperRightLongitude.
-   * @param lowerLeftLongitude       is a geographic coordinate plus the lower
-   *                                 left defined in the sphere
-   *                                 measured in degrees, from 0 to 180 towards
-   *                                 east or west, from the Greenwich Meridian
-   *                                 indicating the vertex of the polygon formed
-   *                                 together with the information
-   *                                 lowerLeftLatitude, upperRightLatitude and
-   *                                 upperRightLongitude.
-   * @param upperRightLatitude       is a geographic coordinate plus the upper
-   *                                 right defined in the sphere
-   *                                 which is the angle between the plane of the
-   *                                 equator and the normal to the reference
-   *                                 surface
-   *                                 indicating the vertex of the polygon formed
-   *                                 together with the information
-   *                                 lowerLeftLatitude, lowerLeftLongitude and
-   *                                 upperRightLongitude.
-   * @param upperRightLongitude      is a geographic coordinate plus the upper
-   *                                 right defined in the
-   *                                 sphere measured in degrees, from 0 to 180
-   *                                 towards east or west, from the Greenwich
-   *                                 Meridian
-   *                                 indicating the vertex of the polygon formed
-   *                                 together with the information
-   *                                 lowerLeftLatitude, lowerLeftLongitude and
-   *                                 upperRightLatitude.
-   * @param initDate                 it is the starting date (according to the
-   *                                 Gregorian calendar) of the interval
-   *                                 in which the satellite data collection date
-   *                                 must belong. If it belongs, a SAPS task will
-   *                                 be
-   *                                 created to process the satellite data.
-   * @param endDate                  It is the end date (according to the
-   *                                 Gregorian calendar) of the interval in
-   *                                 which the satellite data collection date must
-   *                                 belong. If this belongs, a SAPS task will be
-   *                                 created to process the satellite data.
-   * @param inputdownloadingPhaseTag is the version of the algorithm that will be
-   *                                 used in the task's
-   *                                 inputdownloading step.
-   * @param preprocessingPhaseTag    is the version of the algorithm that will be
-   *                                 used in the task's
-   *                                 preprocessing step.
-   * @param processingPhaseTag       is the version of the algorithm that will be
-   *                                 used in the task's
-   *                                 processing step.
-   * @param priority                 it is an integer in the range 0 to 31 that
-   *                                 indicates how priority the task
-   *                                 processing is.
-   * @param userEmail                it is the email of the task owner (this
-   *                                 information is obtained automatically
-   *                                 by the authenticated user on the platform).
-   */
-  private List<String> createJobTasks(
-      String jobId,
-      String lowerLeftLatitude,
-      String lowerLeftLongitude,
-      String upperRightLatitude,
-      String upperRightLongitude,
-      Date initDate,
-      Date endDate,
-      String inputdownloadingPhaseTag,
-      String preprocessingPhaseTag,
-      String processingPhaseTag,
-      int priority,
-      String userEmail,
-      String label)
+      String userEmail)
       throws Exception {
 
-        List<String> taskIds = new LinkedList<String>();
+    List<String> taskIds = new LinkedList<String>();
 
-        GregorianCalendar cal = new GregorianCalendar();
-        cal.setTime(initDate);
-        GregorianCalendar endCal = new GregorianCalendar();
-        endCal.setTime(endDate);
-        endCal.add(Calendar.DAY_OF_YEAR, 1);
-    
-        String tagsFilePath = System.getProperty(EXECUTION_TAGS_FILE_PATH_KEY);
-        ExecutionScriptTag imageDockerInputdownloading = ExecutionScriptTagUtil.getExecutionScriptTag(
-            tagsFilePath, inputdownloadingPhaseTag, ExecutionScriptTagUtil.INPUT_DOWNLOADER);
-        ExecutionScriptTag imageDockerPreprocessing = ExecutionScriptTagUtil.getExecutionScriptTag(
-            tagsFilePath, preprocessingPhaseTag, ExecutionScriptTagUtil.PRE_PROCESSING);
-        ExecutionScriptTag imageDockerProcessing = ExecutionScriptTagUtil.getExecutionScriptTag(
-            tagsFilePath, processingPhaseTag, ExecutionScriptTagUtil.PROCESSING);
-    
-        String digestInputdownloading = DigestUtil.getDigest(imageDockerInputdownloading);
-        String digestPreprocessing = DigestUtil.getDigest(imageDockerPreprocessing);
-        String digestProcessing = DigestUtil.getDigest(imageDockerProcessing);
-    
-        Set<String> regions = RegionUtil.regionsFromArea(
-            lowerLeftLatitude, lowerLeftLongitude, upperRightLatitude, upperRightLongitude);
-    
-        while (cal.before(endCal)) {
-          int startingYear = cal.get(Calendar.YEAR);
-          List<String> datasets = DatasetUtil.getSatsInOperationByYear(startingYear);
-    
-          for (String dataset : datasets) {
-            LOGGER.debug("Adding new tasks with dataset " + dataset);
-    
-            for (String region : regions) {
-              String taskId = UUID.randomUUID().toString();
-              Boolean isValidImage = validateLandsatImage(region, cal.getTime());
+    GregorianCalendar cal = new GregorianCalendar();
+    cal.setTime(initDate);
+    GregorianCalendar endCal = new GregorianCalendar();
+    endCal.setTime(endDate);
+    endCal.add(Calendar.DAY_OF_YEAR, 1);
 
-              if (isValidImage) {
-    
-                SapsImage task = addTask(
-                    taskId,
-                    dataset,
-                    region,
-                    cal.getTime(),
-                    priority,
-                    userEmail,
-                    inputdownloadingPhaseTag,
-                    digestInputdownloading,
-                    preprocessingPhaseTag,
-                    digestPreprocessing,
-                    processingPhaseTag,
-                    digestProcessing);
-                insertJobTask(taskId, jobId);
-                addTimestampTaskInCatalog(task, "update task [" + taskId + "] timestamp");
-                taskIds.add(taskId);
+    String tagsFilePath = System.getProperty(EXECUTION_TAGS_FILE_PATH_KEY);
+    ExecutionScriptTag imageDockerInputdownloading = ExecutionScriptTagUtil.getExecutionScriptTag(
+        tagsFilePath, inputdownloadingPhaseTag, ExecutionScriptTagUtil.INPUT_DOWNLOADER);
+    ExecutionScriptTag imageDockerPreprocessing = ExecutionScriptTagUtil.getExecutionScriptTag(
+        tagsFilePath, preprocessingPhaseTag, ExecutionScriptTagUtil.PRE_PROCESSING);
+    ExecutionScriptTag imageDockerProcessing = ExecutionScriptTagUtil.getExecutionScriptTag(
+        tagsFilePath, processingPhaseTag, ExecutionScriptTagUtil.PROCESSING);
+
+    String digestInputdownloading = DigestUtil.getDigest(imageDockerInputdownloading);
+    String digestPreprocessing = DigestUtil.getDigest(imageDockerPreprocessing);
+    String digestProcessing = DigestUtil.getDigest(imageDockerProcessing);
+
+    Set<String> regions = RegionUtil.regionsFromArea(
+        lowerLeftLatitude, lowerLeftLongitude, upperRightLatitude, upperRightLongitude);
+
+    while (cal.before(endCal)) {
+      int startingYear = cal.get(Calendar.YEAR);
+      List<String> datasets = DatasetUtil.getSatsInOperationByYear(startingYear);
+
+      for (String dataset : datasets) {
+        LOGGER.debug("Adding new tasks with dataset " + dataset);
+
+        for (String region : regions) {
+          String taskId = UUID.randomUUID().toString();
+          Boolean isValidImage = validateLandsatImage(region, cal.getTime());
+
+          if (isValidImage) {
+            SapsImage task =
+                addTask(taskId, dataset, region, cal.getTime(),priority, userEmail, 
+                inputdownloadingPhaseTag, digestInputdownloading, preprocessingPhaseTag,
+                digestPreprocessing, processingPhaseTag, digestProcessing);
+
+            if (task != null) {
+              addTimestampTaskInCatalog(task, "updates task [" + taskId + "] timestamp");
+              taskIds.add(taskId);
             }
           }
         }
-          cal.add(Calendar.DAY_OF_YEAR, 1);
-        }
-        return taskIds;
-  }
-
-  private void addUserJob(
-      String jobId,
-      String lowerLeftLatitude,
-      String lowerLeftLongitude,
-      String upperRightLatitude,
-      String upperRightLongitude,
-      Date startDate,
-      Date endDate,
-      int priority,
-      String jobLabel,
-      List<String> tasksIds,
-      String userEmail) {
-    CatalogUtils.addNewUserJob(
-        catalog,
-        jobId,
-        lowerLeftLatitude,
-        lowerLeftLongitude,
-        upperRightLatitude,
-        upperRightLongitude,
-        userEmail,
-        jobLabel,
-        startDate,
-        endDate,
-        priority,
-        tasksIds,
-        "add new job [" + jobLabel + "]");
-  }
-
-  private void insertJobTask(
-      String taskId,
-      String jobId) {
-    CatalogUtils.insertJobTask(
-        catalog,
-        taskId,
-        jobId,
-        "insert task [" + taskId + "]" + " into job [" + jobId + "]");
-  }
-
-  public Integer getJobsCount(JobState state, String search, boolean recoverOngoing, boolean recoverCompleted) {
-    return CatalogUtils.getUserJobsCount(catalog, state, search, recoverOngoing, recoverCompleted, "get amount of jobs");
-  }
-
-  public List<SapsImage> getJobTasks(String jobId, ImageTaskState state, String search, Integer page,
-      Integer size, String sortField, String sortOrder, boolean recoverOngoing, boolean recoverCompleted) {
-    return CatalogUtils.getUserJobTasks(catalog, jobId, state, search, page, size, sortField, sortOrder,
-        recoverOngoing, recoverCompleted, "get job tasks");
-  }
-
-  public Integer getJobTasksCount(String jobId, ImageTaskState state, String search, boolean recoverOngoing, boolean recoverCompleted) {
-    return CatalogUtils.getUserJobTasksCount(catalog, jobId, state, search, recoverOngoing, recoverCompleted, "get amount of tasks");
+      }
+      cal.add(Calendar.DAY_OF_YEAR, 1);
+    }
+    return taskIds;
   }
 
   /**
@@ -410,34 +238,33 @@ public class SubmissionDispatcher implements Dispatcher {
   public List<SapsImage> getTasks(String search, Integer page, Integer size,
     String sortField, String sortOrder, ImageTaskState state) throws SQLException {
     
-    if (state == ImageTaskState.ONGOING) {
+    if (state == ImageTaskState.CREATED || state == ImageTaskState.DOWNLOADING ||  state == ImageTaskState.DOWNLOADED 
+    || state == ImageTaskState.PREPROCESSING || state == ImageTaskState.PREPROCESSED || state == ImageTaskState.READY
+    || state == ImageTaskState.RUNNING ) {
         return CatalogUtils.getTasksOngoingWithPagination(catalog, search, page, size, sortField,
-            sortOrder, "get paginated ongoing tasks");
-    } else if (state == ImageTaskState.COMPLETED) {
+            sortOrder);
+    } else if (state == ImageTaskState.FINISHED || state == ImageTaskState.ARCHIVING || state == ImageTaskState.ARCHIVED || state == ImageTaskState.FAILED) {
         return CatalogUtils.getTasksCompletedWithPagination(catalog, search, page, size, sortField,
-            sortOrder, "get paginated completed tasks");
+            sortOrder);
     } else {
         return CatalogUtils.getTasks(catalog, state);
     }
-  }
-
-  public Integer getCountTasks(String search, ImageTaskState state) {
-    if (state == ImageTaskState.ONGOING) {
-        return CatalogUtils.getCountOngoingTasks(catalog, search, "get ongoing amount of tasks");
-    } else if (state == ImageTaskState.COMPLETED) {
-        return CatalogUtils.getCountCompletedTasks(catalog, search, "get completed amount of tasks");
-    }
-    return null;
   }
 
   public SapsImage getTask(String taskId) {
     return CatalogUtils.getTaskById(catalog, taskId, "gets task with id [" + taskId + "]");
   }
 
-  public List<SapsUserJob> getAllJobs(JobState state, String search, Integer page, Integer size, String sortField,
-      String sortOrder, boolean withoutTasks, boolean recoverOngoing, boolean recoverCompleted) {
-    return CatalogUtils.getUserJobs(catalog, state, search, page, size, sortField, sortOrder, withoutTasks,
-        recoverOngoing, recoverCompleted, "get jobs");
+  public Integer getCountOngoingTasks(String search) {
+    return CatalogUtils.getCountOngoingTasks(catalog, search, "get ongoing amount of tasks");
+  }
+
+  public Integer getCountCompletedTasks(String search) {
+    return CatalogUtils.getCountCompletedTasks(catalog, search, "get completed amount of tasks");
+  }
+
+  public List<SapsImage> getAllTasks() {
+    return CatalogUtils.getAllTasks(catalog, "get all tasks");
   }
 
   public List<SapsImage> getProcessedTasks(

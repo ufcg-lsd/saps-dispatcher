@@ -12,7 +12,8 @@ import org.restlet.representation.Representation;
 import org.restlet.representation.StringRepresentation;
 import org.restlet.resource.Post;
 import org.restlet.resource.ResourceException;
-import saps.dispatcher.interfaces.SapsUser;
+
+import saps.common.core.model.SapsUser;
 
 public class UserResource extends BaseResource {
 
