@@ -17,7 +17,13 @@ import org.restlet.resource.Directory;
 import org.restlet.routing.Router;
 import org.restlet.service.ConnectorService;
 import org.restlet.service.CorsService;
-import saps.dispatcher.interfaces.*;
+
+import saps.catalog.core.retry.CatalogUtils;
+import saps.common.core.model.SapsImage;
+import saps.common.core.model.SapsUser;
+import saps.common.core.model.enums.ImageTaskState;
+import saps.common.utils.SapsPropertiesConstants;
+import saps.common.utils.SapsPropertiesUtil;
 import saps.dispatcher.core.SubmissionDispatcher;
 import saps.dispatcher.core.restlet.resource.EmailResource;
 import saps.dispatcher.core.restlet.resource.ImageResource;
@@ -38,9 +44,9 @@ public class DatabaseApplication extends Application {
   private SubmissionDispatcher submissionDispatcher;
   private Component restletComponent;
 
-  public DatabaseApplication(Properties properties) throws SapsException, SQLException {
+  public DatabaseApplication(Properties properties) throws Exception, SQLException {
     if (!checkProperties(properties))
-      throw new SapsException(
+      throw new Exception(
           "Error on validate the file. Missing properties for start Database Application.");
 
     this.properties = properties;
@@ -141,8 +147,9 @@ public class DatabaseApplication extends Application {
    * @param processingPhaseTag       processing phase tag
    * @param priority                 priority of new tasks
    * @param email                    user email
+   * @param label                    user label
    */
-  public List<String> addNewTasks(
+  public List<String> addTasks(
       String lowerLeftLatitude,
       String lowerLeftLongitude,
       String upperRightLatitude,
@@ -153,7 +160,8 @@ public class DatabaseApplication extends Application {
       String preprocessingPhaseTag,
       String processingPhaseTag,
       String priority,
-      String email)
+      String email,
+      String label)
       throws Exception {
     return submissionDispatcher.addTasks(
         lowerLeftLatitude,
@@ -187,24 +195,6 @@ public class DatabaseApplication extends Application {
    */
   public List<SapsImage> getTasks() {
     return submissionDispatcher.getAllTasks();
-  }
-
-  public List<SapsImage> getTasksOngoingWithPagination(String search, Integer page, Integer size,
-      String sortField, String sortOrder) {
-    return submissionDispatcher.getTasksOngoingWithPagination(search, page, size, sortField, sortOrder);
-  }
-
-  public List<SapsImage> getTasksCompletedWithPagination(String search, Integer page, Integer size,
-      String sortField, String sortOrder) {
-    return submissionDispatcher.getTasksCompletedWithPagination(search, page, size, sortField, sortOrder);
-  }
-
-  public Integer getCountOngoingTasks(String search) {
-    return submissionDispatcher.getCountOngoingTasks(search);
-  }
-
-  public Integer getCountCompletedTasks(String search) {
-    return submissionDispatcher.getCountCompletedTasks(search);
   }
 
   /**
@@ -257,4 +247,23 @@ public class DatabaseApplication extends Application {
   public List<SapsImage> getTasksInState(ImageTaskState state) throws SQLException {
     return this.submissionDispatcher.getTasksByState(state);
   }
+
+  public List<SapsImage> getTasksOngoingWithPagination(String search, Integer page, Integer size,
+      String sortField, String sortOrder) throws SQLException {
+    return submissionDispatcher.getTasks(search, page, size, sortField, sortOrder, ImageTaskState.CREATED);
+  }
+
+  public List<SapsImage> getTasksCompletedWithPagination(String search, Integer page, Integer size,
+      String sortField, String sortOrder) throws SQLException {
+    return submissionDispatcher.getTasks(search, page, size, sortField, sortOrder, ImageTaskState.FINISHED);
+  }
+
+  public Integer getCountOngoingTasks(String search) {
+    return submissionDispatcher.getCountOngoingTasks(search);
+  }
+
+  public Integer getCountCompletedTasks(String search) {
+    return submissionDispatcher.getCountCompletedTasks(search);
+  }
+
 }
