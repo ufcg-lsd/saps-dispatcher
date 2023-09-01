@@ -4,9 +4,6 @@ import java.util.List;
 import java.util.Date;
 import saps.common.core.model.SapsImage;
 import saps.common.core.model.SapsUser;
-import saps.common.core.model.enums.ImageTaskState;
-
-
 
 public interface Dispatcher {
 

@@ -178,6 +178,48 @@ public class DatabaseApplication extends Application {
   }
 
   /**
+   * This function add new tasks in Catalog.
+   *
+   * @param lowerLeftLatitude        lower left latitude (coordinate)
+   * @param lowerLeftLongitude       lower left longitude (coordinate)
+   * @param upperRightLatitude       upper right latitude (coordinate)
+   * @param upperRightLongitude      upper right longitude (coordinate)
+   * @param initDate                 initial date
+   * @param endDate                  end date
+   * @param inputdownloadingPhaseTag inputdownloading phase tag
+   * @param preprocessingPhaseTag    preprocessing phase tag
+   * @param processingPhaseTag       processing phase tag
+   * @param priority                 priority of new tasks
+   * @param email                    user email
+   */
+  public List<String> addNewTasks(
+      String lowerLeftLatitude,
+      String lowerLeftLongitude,
+      String upperRightLatitude,
+      String upperRightLongitude,
+      Date initDate,
+      Date endDate,
+      String inputdownloadingPhaseTag,
+      String preprocessingPhaseTag,
+      String processingPhaseTag,
+      String priority,
+      String email)
+      throws Exception {
+    return submissionDispatcher.addTasks(
+        lowerLeftLatitude,
+        lowerLeftLongitude,
+        upperRightLatitude,
+        upperRightLongitude,
+        initDate,
+        endDate,
+        inputdownloadingPhaseTag,
+        preprocessingPhaseTag,
+        processingPhaseTag,
+        Integer.parseInt(priority),
+        email);
+  }
+
+  /**
    * This function get saps image with specific id in Catalog.
    *
    * @param taskId task id to be searched

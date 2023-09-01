@@ -4,7 +4,6 @@ package saps.dispatcher.core;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Collections;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.LinkedList;
@@ -12,9 +11,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 import java.util.UUID;
-
 import org.apache.log4j.Logger;
-
 import saps.catalog.core.Catalog;
 import saps.catalog.core.jdbc.JDBCCatalog;
 import saps.catalog.core.retry.CatalogUtils;
