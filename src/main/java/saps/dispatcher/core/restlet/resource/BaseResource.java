@@ -4,6 +4,8 @@ package saps.dispatcher.core.restlet.resource;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
+
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.log4j.Logger;
 import org.restlet.data.Form;
@@ -78,14 +80,37 @@ public class BaseResource extends ServerResource {
     return false;
   }
 
-  String extractCoordinate(Form form, String name, int index) {
-    String data[] = form.getValuesArray(name + "[]");
-    return data[index];
-  }
+  
 
-  Date extractDate(Form form, String name) throws ParseException {
-    String data = form.getFirstValue(name);
-    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-    return dateFormat.parse(data);
-  }
+  String extractCoordinate(Form form, String name, int index) {
+
+    String value = form.getFirstValue(name);
+    if (value != null) {
+        String[] parts = value.split(",");
+        if (parts.length > index) {
+            String result = parts[index].trim(); // Remove espaços em branco, se houver
+            if (result.endsWith("\"")) {
+                result = result.substring(0, result.length() - 1); // Remove a última aspa
+            }
+            return result;
+        }
+    }
+    
+    throw new IllegalArgumentException("Name " + name + " not found in form or doesn't have the expected structure.");
+}
+
+Date extractDate(Form form, String name) throws ParseException {
+  String data = form.getFirstValue(name);
+  LOGGER.info("Data value: " + data);
+
+  if (data != null && !data.isEmpty()) {  
+      SimpleDateFormat dateFormat = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z", Locale.ENGLISH);
+
+      LOGGER.info("DateFormat: " + dateFormat);
+      return dateFormat.parse(data);
+  } 
+
+  throw new IllegalArgumentException("Data is either null or empty for name: " + name);
+}
+
 }

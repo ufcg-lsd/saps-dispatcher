@@ -45,9 +45,10 @@ public class ImageResource extends BaseResource {
   private static final String UPPER_RIGHT = "upperRight";
   private static final String PROCESSING_INIT_DATE = "initialDate";
   private static final String PROCESSING_FINAL_DATE = "finalDate";
-  private static final String PROCESSING_INPUT_GATHERING_TAG = "inputGatheringTag";
+  private static final String PROCESSING_INPUT_GATHERING_TAG = "inputDownloadingTag";
   private static final String PROCESSING_INPUT_PREPROCESSING_TAG = "inputPreprocessingTag";
-  private static final String PROCESSING_ALGORITHM_EXECUTION_TAG = "algorithmExecutionTag";
+  private static final String PROCESSING_ALGORITHM_EXECUTION_TAG = "inputProcessingTag";
+
   private static final String PRIORITY = "priority";
   private static final String EMAIL = "email";
   private static final String LABEL = "label";
@@ -144,9 +145,13 @@ public class ImageResource extends BaseResource {
     String upperRightLongitude;
     try {
       lowerLeftLatitude = extractCoordinate(form, LOWER_LEFT, 0);
+      LOGGER.info(lowerLeftLatitude);
       lowerLeftLongitude = extractCoordinate(form, LOWER_LEFT, 1);
+      LOGGER.info(lowerLeftLongitude);
       upperRightLatitude = extractCoordinate(form, UPPER_RIGHT, 0);
+      LOGGER.info(upperRightLatitude);
       upperRightLongitude = extractCoordinate(form, UPPER_RIGHT, 1);
+      LOGGER.info(upperRightLongitude);
     } catch (Exception e) {
       LOGGER.error("Failed to parse coordinates of new processing.", e);
       throw new ResourceException(
@@ -157,27 +162,38 @@ public class ImageResource extends BaseResource {
     Date endDate;
     try {
       initDate = extractDate(form, PROCESSING_INIT_DATE);
-      endDate = extractDate(form, PROCESSING_FINAL_DATE);
-    } catch (Exception e) {
-      LOGGER.error("Failed to parse dates of new processing.", e);
-      throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST, "All dates must be informed.");
-    }
+      LOGGER.info("Initial date: " + initDate);
+  } catch (Exception e) {
+      throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST, "Initial date must be informed.");
+  }
+  
+  try {
+    endDate = extractDate(form, PROCESSING_FINAL_DATE);
+    LOGGER.info("End date: " + endDate);
+  } catch (Exception e) {
+    LOGGER.error("Failed to parse end date of new processing.", e);
+    throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST, "End date must be informed.");
+  }
+  
+  LOGGER.info("All form values: " + form.getValuesMap().toString());
+
 
     String inputdownloadingPhaseTag = form.getFirstValue(PROCESSING_INPUT_GATHERING_TAG);
-    if (inputdownloadingPhaseTag.isEmpty())
-      throw new ResourceException(
-          Status.CLIENT_ERROR_BAD_REQUEST, "Input Gathering must be informed.");
-    String preprocessingPhaseTag = form.getFirstValue(PROCESSING_INPUT_PREPROCESSING_TAG);
-    if (preprocessingPhaseTag.isEmpty())
-      throw new ResourceException(
-          Status.CLIENT_ERROR_BAD_REQUEST, "Input Preprocessing must be informed.");
-    String processingPhaseTag = form.getFirstValue(PROCESSING_ALGORITHM_EXECUTION_TAG);
-    if (processingPhaseTag.isEmpty())
-      throw new ResourceException(
-          Status.CLIENT_ERROR_BAD_REQUEST, "Algorithm Execution must be informed.");
-    String priority = form.getFirstValue(PRIORITY);
-    String email = form.getFirstValue(EMAIL);
-    String label = form.getFirstValue(LABEL);
+  if (inputdownloadingPhaseTag == null || inputdownloadingPhaseTag.isEmpty())
+      LOGGER.error("Input Gathering must be informed.");
+
+  String preprocessingPhaseTag = form.getFirstValue(PROCESSING_INPUT_PREPROCESSING_TAG);
+  if (preprocessingPhaseTag == null || preprocessingPhaseTag.isEmpty())
+      LOGGER.error("Input Preprocessing must be informed.");
+
+  String processingPhaseTag = form.getFirstValue(PROCESSING_ALGORITHM_EXECUTION_TAG);
+  if (processingPhaseTag == null || processingPhaseTag.isEmpty())
+      LOGGER.error("Algorithm Execution must be informed.");
+
+      String priority = form.getFirstValue(PRIORITY);
+      String email = form.getFirstValue(EMAIL);
+      String label = form.getFirstValue(LABEL);
+
 
     if (label == null || label.isEmpty()) {
       SimpleDateFormat getYearFormat = new SimpleDateFormat("yyyy");

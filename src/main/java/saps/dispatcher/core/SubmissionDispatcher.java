@@ -308,8 +308,10 @@ public class SubmissionDispatcher {
     String tagsFilePath = System.getProperty(EXECUTION_TAGS_FILE_PATH_KEY);
     ExecutionScriptTag imageDockerInputdownloading = ExecutionScriptTagUtil.getExecutionScriptTag(
         tagsFilePath, inputdownloadingPhaseTag, ExecutionScriptTagUtil.INPUT_DOWNLOADER);
+        LOGGER.info("inputd downloading tag: " + imageDockerInputdownloading);
     ExecutionScriptTag imageDockerPreprocessing = ExecutionScriptTagUtil.getExecutionScriptTag(
         tagsFilePath, preprocessingPhaseTag, ExecutionScriptTagUtil.PRE_PROCESSING);
+        LOGGER.info("processing tag: " + imageDockerPreprocessing);
     ExecutionScriptTag imageDockerProcessing = ExecutionScriptTagUtil.getExecutionScriptTag(
         tagsFilePath, processingPhaseTag, ExecutionScriptTagUtil.PROCESSING);
 
