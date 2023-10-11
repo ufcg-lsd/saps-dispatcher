@@ -34,13 +34,11 @@ import saps.dispatcher.core.restlet.resource.RegionResource;
 import saps.dispatcher.core.restlet.resource.TaskResource;
 import saps.dispatcher.core.restlet.resource.UserResource;
 
-// FIXME Delete any obvious java-doc
 public class DatabaseApplication extends Application {
   private static final String DB_WEB_STATIC_ROOT = "./dbWebHtml/static";
 
   public static final Logger LOGGER = Logger.getLogger(DatabaseApplication.class);
 
-  // FIXME Remove properties field and add new variables
   private Properties properties;
   private SubmissionDispatcher submissionDispatcher;
   private Component restletComponent;

@@ -37,7 +37,7 @@ public class BaseResource extends ServerResource {
         "Trying to authenticate the user [" + userEmail + "] with password [" + userPass + "] and EGI [" + userEGI + "]");
     
     String userID = (userEGI == null || userEGI.isEmpty()) ? userEmail: userEGI;
-
+    
     SapsUser user;
 
     try {
@@ -80,17 +80,15 @@ public class BaseResource extends ServerResource {
     return false;
   }
 
-  
-
   String extractCoordinate(Form form, String name, int index) {
 
     String value = form.getFirstValue(name);
     if (value != null) {
         String[] parts = value.split(",");
         if (parts.length > index) {
-            String result = parts[index].trim(); // Remove espaços em branco, se houver
+            String result = parts[index].trim();
             if (result.endsWith("\"")) {
-                result = result.substring(0, result.length() - 1); // Remove a última aspa
+                result = result.substring(0, result.length() - 1); 
             }
             return result;
         }
@@ -101,16 +99,8 @@ public class BaseResource extends ServerResource {
 
 Date extractDate(Form form, String name) throws ParseException {
   String data = form.getFirstValue(name);
-  LOGGER.info("Data value: " + data);
-
-  if (data != null && !data.isEmpty()) {  
-      SimpleDateFormat dateFormat = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z", Locale.ENGLISH);
-
-      LOGGER.info("DateFormat: " + dateFormat);
-      return dateFormat.parse(data);
-  } 
-
-  throw new IllegalArgumentException("Data is either null or empty for name: " + name);
+  SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+  return dateFormat.parse(data); 
 }
 
 }

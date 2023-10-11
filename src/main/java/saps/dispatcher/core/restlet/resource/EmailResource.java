@@ -14,13 +14,11 @@ import org.restlet.representation.Representation;
 import org.restlet.representation.StringRepresentation;
 import org.restlet.resource.Post;
 import org.restlet.resource.ResourceException;
+
 import saps.common.core.model.SapsImage;
 import saps.common.core.storage.AccessLink;
-import saps.common.core.storage.PermanentStorage;
-import saps.common.core.storage.PermanentStorageType;
+import saps.archiver.core.FSPermanentStorage;
 import saps.common.core.storage.exceptions.TaskNotFoundException;
-import saps.common.core.storage.nfs.NfsPermanentStorage;
-import saps.common.core.storage.swift.SwiftPermanentStorage;
 import saps.common.utils.SapsPropertiesConstants;
 import saps.dispatcher.core.email.TaskCompleteInfo;
 import saps.dispatcher.core.email.TasksEmailSender;
@@ -29,30 +27,25 @@ public class EmailResource extends BaseResource {
 
   private static final Logger LOGGER = Logger.getLogger(EmailResource.class);
 
-  // TODO update value this to "tasks_id[]" (requires a change to the Dashboard component)
-  private static final String REQUEST_ATTR_PROCESSED_TASKS = "images_id[]";
+  private static final String REQUEST_ATTR_PROCESSED_TASKS = "tasks_id[]";
 
   @Post
   public Representation sendTaskToEmail(Representation representation) {
+
     Form form = new Form(representation);
 
     String userEmail = form.getFirstValue(UserResource.REQUEST_ATTR_USER_EMAIL, true);
     String userPass = form.getFirstValue(UserResource.REQUEST_ATTR_USERPASS, true);
     String userEGI = form.getFirstValue(UserResource.REQUEST_ATTR_USER_EGI, true);
 
-    // FIXME I think that authenticateUser should throw an exception itself once
-    // the authentication process hasn't worked... - by @raonismaneoto
     if (!authenticateUser(userEmail, userPass, userEGI) || userEmail.equals("anonymous"))
       throw new ResourceException(HttpStatus.SC_UNAUTHORIZED);
 
     String[] tasksId = form.getValuesArray(REQUEST_ATTR_PROCESSED_TASKS, true);
     Properties properties = application.getProperties();
-
     try {
-      // TODO check if it is possible to reuse permanent storage instead of always creating another
-      // one
-      PermanentStorage permanentStorage = createPermanentStorage(properties);
 
+      FSPermanentStorage permanentStorage = createPermanentStorage(properties);
       String noReplyEmail = properties.getProperty(SapsPropertiesConstants.NO_REPLY_EMAIL);
       String noReplyPass = properties.getProperty(SapsPropertiesConstants.NO_REPLY_PASS);
 
@@ -74,25 +67,21 @@ public class EmailResource extends BaseResource {
         "An error occurred while sending the email, please try again later.", MediaType.TEXT_PLAIN);
   }
 
-  private PermanentStorage createPermanentStorage(Properties properties) throws Exception {
-    String permanentStorageType =
-        properties.getProperty(SapsPropertiesConstants.SAPS_PERMANENT_STORAGE_TYPE);
-    // FIXME replace this to a more flexible approach to avoid if/switchs. something
-    // akin the RAS approach to load the plugins - by @thiagomanel and @raonismaneoto
-    if (PermanentStorageType.SWIFT.toString().equalsIgnoreCase(permanentStorageType)) {
-      return new SwiftPermanentStorage(properties);
-    } else if (PermanentStorageType.NFS.toString().equalsIgnoreCase(permanentStorageType)) {
-      return new NfsPermanentStorage(properties);
-    }
-    throw new IOException("Failed to recognize type of permanent storage");
+  private FSPermanentStorage createPermanentStorage(Properties properties) throws Exception {
+
+    return new  FSPermanentStorage(properties);
   }
 
   private List<TaskCompleteInfo> buildTasksListByTaskIdsList(
-      PermanentStorage permanentStorage, List<String> tasksId)
+      FSPermanentStorage permanentStorage, List<String> tasksId)
       throws IOException, TaskNotFoundException {
+
     List<TaskCompleteInfo> tasksCompleteInfo = new LinkedList<>();
+    
     for (String taskId : tasksId) {
+
       SapsImage currentTask = application.getTask(taskId);
+
       List<AccessLink> currentTaskAccessLinks = permanentStorage.generateAccessLinks(currentTask);
       TaskCompleteInfo taskCompleteInfo = new TaskCompleteInfo(currentTask, currentTaskAccessLinks);
       tasksCompleteInfo.add(taskCompleteInfo);
