@@ -415,6 +415,7 @@ public class SubmissionDispatcher {
         lowerLeftLatitude, lowerLeftLongitude, upperRightLatitude, upperRightLongitude);
 
     for (String region : regions) {
+     
       List<SapsImage> tasksInCurrentRegion = CatalogUtils.getProcessedTasks(
           catalog,
           region,
@@ -437,6 +438,7 @@ public class SubmissionDispatcher {
               + endDate);
       filteredTasks.addAll(tasksInCurrentRegion);
     }
+
     return filteredTasks;
   }
 }
