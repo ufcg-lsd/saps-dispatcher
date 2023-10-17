@@ -38,8 +38,6 @@ public class LinkResource extends BaseResource {
     String userPass = form.getFirstValue(UserResource.REQUEST_ATTR_USERPASS, true);
     String userEGI = form.getFirstValue(UserResource.REQUEST_ATTR_USER_EGI, true);
 
-    // FIXME I think that authenticateUser should throw an exception itself once
-    // the authentication process hasn't worked... - by @raonismaneoto
     if (!authenticateUser(userEmail, userPass, userEGI))
       throw new ResourceException(HttpStatus.SC_UNAUTHORIZED);
 
@@ -49,8 +47,6 @@ public class LinkResource extends BaseResource {
     try {
       SapsImage sapsTask = application.getTask(taskId);
 
-      // TODO check if it is possible to reuse permanent storage instead of always creating another
-      // one
       PermanentStorage permanentStorage = createPermanentStorage(properties);
 
       List<AccessLink> links = permanentStorage.generateAccessLinks(sapsTask);
@@ -68,8 +64,6 @@ public class LinkResource extends BaseResource {
   private PermanentStorage createPermanentStorage(Properties properties) throws Exception {
     String permanentStorageType =
         properties.getProperty(SapsPropertiesConstants.SAPS_PERMANENT_STORAGE_TYPE);
-    // FIXME replace this to a more flexible approach to avoid if/switchs. something
-    // akin the RAS approach to load the plugins - by @thiagomanel and @raonismaneoto
     if (PermanentStorageType.SWIFT.toString().equalsIgnoreCase(permanentStorageType)) {
       return new SwiftPermanentStorage(properties);
     } else if (PermanentStorageType.NFS.toString().equalsIgnoreCase(permanentStorageType)) {

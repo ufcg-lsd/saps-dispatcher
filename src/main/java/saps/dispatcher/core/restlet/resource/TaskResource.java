@@ -28,8 +28,6 @@ public class TaskResource extends BaseResource {
     String userPass = form.getFirstValue(UserResource.REQUEST_ATTR_USERPASS, true);
     String userEGI = form.getFirstValue(UserResource.REQUEST_ATTR_USER_EGI, true);
 
-    // FIXME I think that authenticateUser should throw an exception itself once
-    // the authentication process hasn't worked... - by @raonismaneoto
     if (!authenticateUser(userEmail, userPass, userEGI))
       throw new ResourceException(HttpStatus.SC_UNAUTHORIZED);
 
@@ -38,7 +36,5 @@ public class TaskResource extends BaseResource {
     SapsImage sapsTask = application.getTask(taskId);
 
     return new StringRepresentation(gson.toJson(sapsTask), MediaType.APPLICATION_JSON);
-    // return new StringRepresentation("An error occurred while getting the task by id [" + taskId +
-    // "], please try again later.", MediaType.TEXT_PLAIN);
   }
 }
