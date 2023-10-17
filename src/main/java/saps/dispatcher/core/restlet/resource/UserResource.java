@@ -46,13 +46,21 @@ public class UserResource extends BaseResource {
     checkMandatoryAttributes(userName, userEmail, userPass, userPassConfirm);
     
     Properties properties = application.getProperties();
-    String EGISecretKey = properties.getProperty(EGI_SECRET_KEY);    
-    SapsUser user = application.getUser(userEmail);
+    String EGISecretKey = properties.getProperty(EGI_SECRET_KEY);  
+    
+    SapsUser user = null;
+
+    try {
+        user = application.getUser(userEmail);
+    } catch (saps.catalog.core.exceptions.UserNotFoundException e) {
+        user = null;
+    }
 
     if (user != null && userPass.equals(EGISecretKey)) {
       LOGGER.debug("User [" + userEmail + "] successfully authenticated");
       return new StringRepresentation("Success");
-    } else {
+    } 
+    else {
       LOGGER.debug("Creating user with userEmail " + userEmail + " and userName " + userName);
     }
 
@@ -65,8 +73,10 @@ public class UserResource extends BaseResource {
       }
       application.createUser(userEmail, userName, md5Pass, userState, notify, false);
     } catch (Exception e) {        
+
       LOGGER.error("Error while creating user", e);
-      return new StringRepresentation(CREATE_USER_ALREADY_EXISTS, MediaType.TEXT_PLAIN);
+
+      throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST, CREATE_USER_ALREADY_EXISTS);
     }
 
     return new StringRepresentation(CREATE_USER_MESSAGE_OK, MediaType.TEXT_PLAIN);

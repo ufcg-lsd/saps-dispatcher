@@ -74,11 +74,13 @@ public class RegionResource extends BaseResource {
       LOGGER.error("Error while trying creating JSONObject");
     }
 
+    LOGGER.info(result);
     return new StringRepresentation(result.toString(), MediaType.APPLICATION_JSON);
   }
 
   @Post
   public Representation getProcessedImagesInInterval(Representation representation) {
+
     Form form = new Form(representation);
 
     String userEmail = form.getFirstValue(UserResource.REQUEST_ATTR_USER_EMAIL, true);
@@ -88,83 +90,69 @@ public class RegionResource extends BaseResource {
     if (!authenticateUser(userEmail, userPass, userEGI) || userEmail.equals("anonymous")) {
       throw new ResourceException(HttpStatus.SC_UNAUTHORIZED);
     }
+    
     String lowerLeftLatitude;
     String lowerLeftLongitude;
     String upperRightLatitude;
     String upperRightLongitude;
+    
     try {
       lowerLeftLatitude = extractCoordinate(form, LOWER_LEFT, 0);
       lowerLeftLongitude = extractCoordinate(form, LOWER_LEFT, 1);
       upperRightLatitude = extractCoordinate(form, UPPER_RIGHT, 0);
       upperRightLongitude = extractCoordinate(form, UPPER_RIGHT, 1);
+      
     } catch (Exception e) {
       LOGGER.error("Failed to parse coordinates of new processing.", e);
       throw new ResourceException(
           Status.CLIENT_ERROR_BAD_REQUEST, "All coordinates must be informed.");
     }
+    
     Date initDate;
     Date endDate;
     try {
       initDate = extractDate(form, PROCESSING_INIT_DATE);
       endDate = extractDate(form, PROCESSING_FINAL_DATE);
+
     } catch (Exception e) {
       LOGGER.error("Failed to parse dates of new processing.", e);
       throw new ResourceException(Status.CLIENT_ERROR_BAD_REQUEST, "All dates must be informed.");
     }
 
     String inputdownloadingPhaseTag = form.getFirstValue(PROCESSING_INPUT_GATHERING_TAG);
+    String preprocessingPhaseTag = form.getFirstValue(PROCESSING_INPUT_PREPROCESSING_TAG);
+    String processingPhaseTag = form.getFirstValue(PROCESSING_ALGORITHM_EXECUTION_TAG);
+
     if (inputdownloadingPhaseTag.isEmpty())
       throw new ResourceException(
           Status.CLIENT_ERROR_BAD_REQUEST, "Input Gathering must be informed.");
-    String preprocessingPhaseTag = form.getFirstValue(PROCESSING_INPUT_PREPROCESSING_TAG);
     if (preprocessingPhaseTag.isEmpty())
       throw new ResourceException(
           Status.CLIENT_ERROR_BAD_REQUEST, "Input Preprocessing must be informed.");
-    String processingPhaseTag = form.getFirstValue(PROCESSING_ALGORITHM_EXECUTION_TAG);
     if (processingPhaseTag.isEmpty())
       throw new ResourceException(
           Status.CLIENT_ERROR_BAD_REQUEST, "Algorithm Execution must be informed.");
 
-    String builder =
-        "Recovering processed images with settings:\n"
-            + "\tLower Left: "
-            + lowerLeftLatitude
-            + ", "
-            + lowerLeftLongitude
-            + "\n"
-            + "\tUpper Right: "
-            + upperRightLatitude
-            + ", "
-            + upperRightLongitude
-            + "\n"
-            + "\tInterval: "
-            + initDate
-            + " - "
-            + endDate
-            + "\n"
-            + "\tInputdownloading Tag: "
-            + inputdownloadingPhaseTag
-            + "\n"
-            + "\tPreprocessing tag: "
-            + preprocessingPhaseTag
-            + "\n"
-            + "\tProcessing tag: "
-            + processingPhaseTag
-            + "\n";
+    String builder = "Recovering processed images with settings:\n" +
+        "\tLower Left: " + lowerLeftLatitude + ", " + lowerLeftLongitude + "\n" +
+        "\tUpper Right: " + upperRightLatitude + ", " + upperRightLongitude + "\n" +
+        "\tInterval: " + initDate + " - " + endDate + "\n" +
+        "\tInputdownloading Tag: " + inputdownloadingPhaseTag + "\n" +
+        "\tPreprocessing tag: " + preprocessingPhaseTag + "\n" +
+        "\tProcessing tag: " + processingPhaseTag + "\n";
     LOGGER.info(builder);
 
-    // TODO uncomment when USGS comes back up
-    List<SapsImage> tasks =
-        application.searchProcessedTasks(
-            lowerLeftLatitude,
-            lowerLeftLongitude,
-            upperRightLatitude,
-            upperRightLongitude,
-            initDate,
-            endDate,
-            inputdownloadingPhaseTag,
-            preprocessingPhaseTag,
-            processingPhaseTag);
+    List<SapsImage> tasks = application.searchProcessedTasks(
+        lowerLeftLatitude,
+        lowerLeftLongitude,
+        upperRightLatitude,
+        upperRightLongitude,
+        initDate,
+        endDate,
+        inputdownloadingPhaseTag,
+        preprocessingPhaseTag,
+        processingPhaseTag);
+
     JSONArray arr = new JSONArray();
     for (SapsImage task : tasks) {
       try {
@@ -181,5 +169,5 @@ public class RegionResource extends BaseResource {
     }
 
     return new StringRepresentation(resObj.toString(), MediaType.APPLICATION_JSON);
-  }
+}
 }
