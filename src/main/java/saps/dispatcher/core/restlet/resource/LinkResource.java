@@ -15,11 +15,9 @@ import org.restlet.resource.Get;
 import org.restlet.resource.ResourceException;
 import saps.common.core.model.SapsImage;
 import saps.common.core.storage.AccessLink;
-import saps.common.core.storage.PermanentStorage;
-import saps.common.core.storage.PermanentStorageType;
+import saps.archiver.interfaces.PermanentStorage;
+import saps.archiver.core.FSPermanentStorage;
 import saps.common.core.storage.exceptions.TaskNotFoundException;
-import saps.common.core.storage.nfs.NfsPermanentStorage;
-import saps.common.core.storage.swift.SwiftPermanentStorage;
 import saps.common.utils.SapsPropertiesConstants;
 
 public class LinkResource extends BaseResource {
@@ -64,11 +62,7 @@ public class LinkResource extends BaseResource {
   private PermanentStorage createPermanentStorage(Properties properties) throws Exception {
     String permanentStorageType =
         properties.getProperty(SapsPropertiesConstants.SAPS_PERMANENT_STORAGE_TYPE);
-    if (PermanentStorageType.SWIFT.toString().equalsIgnoreCase(permanentStorageType)) {
-      return new SwiftPermanentStorage(properties);
-    } else if (PermanentStorageType.NFS.toString().equalsIgnoreCase(permanentStorageType)) {
-      return new NfsPermanentStorage(properties);
-    }
-    throw new IOException("Failed to recognize type of permanent storage");
+      return new FSPermanentStorage(properties); 
   }
+
 }
