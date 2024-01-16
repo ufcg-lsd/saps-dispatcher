@@ -6,6 +6,8 @@ import java.util.Objects;
 import java.util.Properties;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.log4j.Logger;
+
+import saps.catalog.core.exceptions.UserNotFoundException;
 import saps.common.core.model.SapsUser;
 import saps.dispatcher.core.restlet.DatabaseApplication;
 
@@ -41,16 +43,20 @@ public class SubmissionDispatcherMain {
     databaseApplication.startServer();
 
     String userEmail = properties.getProperty(ADMIN_EMAIL);
-    SapsUser user = databaseApplication.getUser(userEmail);
-    if (user == null) {
+
+    try {
+      databaseApplication.getUser(ADMIN_EMAIL);
+    } catch (UserNotFoundException e) {
+
       String userName = properties.getProperty(ADMIN_USER);
       String userPass = DigestUtils.md5Hex(properties.getProperty(ADMIN_PASSWORD));
 
       try {
         databaseApplication.createUser(userEmail, userName, userPass, true, false, true);
-      } catch (Exception e) {
-        LOGGER.error("Error while creating user", e);
+      } catch (Exception ex) {
+        LOGGER.error("Error while creating user", ex);
       }
     }
+
   }
 }
